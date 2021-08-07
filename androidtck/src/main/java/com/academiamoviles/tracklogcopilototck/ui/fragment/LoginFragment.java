@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,6 +50,7 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.login_fragment, container, false);
         mDBHelper = new DatabaseHelper(getContext());
+        //mDBHelper = dbhelper.getWritableDatabase();
         edtUser = (EditText) view.findViewById(R.id.edtUser);
         edtPassword = (EditText) view.findViewById(R.id.edtPassword);
         txtVersion = (TextView) view.findViewById(R.id.txtVersion);
@@ -117,15 +120,32 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
         jsonObject.addProperty("password", password);
 
         taskLogin = new HttpAsyncTask("usuario/login", jsonObject.toString());
+
+        Log.d("RutaWeb", String.valueOf(taskLogin));
+
         taskLogin.setCallback(new BaseAsyncTask.Callback() {
             @Override
             public void onPostExecuteTask(int requestCode, int resultCode, Object result) {
+
                 hideProgress();
+                Log.d("ResCode", String.valueOf(resultCode));
+                Log.d("ResOK", String.valueOf(BaseAsyncTask.RESULT_OK));
+
                 if (resultCode == BaseAsyncTask.RESULT_OK) {
+                    Log.d("LOGINNN", "FUNCIONA");
                     try {
                         JSONObject jsonResponse = new JSONObject((String) result);
                         if (jsonResponse.getBoolean("ok")) {
+                            Log.d("LOGINNNDATA", jsonResponse.getString("data"));
                             myApp.objUser = User.fromJson(jsonResponse.getString("data"));
+                            Log.d("INICIO", "MENSAJES Ini");
+                            Log.d("LOGIN User ID: ", String.valueOf(myApp.objUser.userId));
+                            Log.d("LOGIN Atribute: ", String.valueOf(myApp.objUser.attribute));
+                            Log.d("LOGIN User Web", String.valueOf(myApp.objUser.userWeb));
+                            Log.d("LOGIN ID Empresa", String.valueOf(myApp.objUser.idEmpresa));
+                            Log.d("LOGIN MSG", String.valueOf(myApp.objUser.msg));
+//                            Log.d("LOGIN FLAG", String.valueOf(myApp.objUser.msg));
+                            Log.d("FIN", "MENSAJES Fin");
                             if(myApp.objUser.msg==null) {
 
                                 //myApp.objUser.userWeb ="2465";
@@ -134,6 +154,7 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
                                 User.saveIS(getContext(), jsonResponse.getString("data"));
 
                                 UserUtil.saveCredentials(getActivity(), SeguridadUtils.encriptar(user), SeguridadUtils.encriptar(password));
+                                Log.d("LOGINNN", "FUNCIONAAAAA");
                                 mDBHelper.createUser(new Users(user,"","",myApp.objUser.userWeb));
                                 launchActivity();
                             } else {
@@ -146,6 +167,7 @@ public class LoginFragment extends BaseFragment implements View.OnClickListener 
                         e.printStackTrace();
                     }
                 } else {
+                    Log.d("ERROR", "ERRORRRR");
                     showMensajeDialog(Constants.Mensaje.ERROR_SC);
                 }
             }

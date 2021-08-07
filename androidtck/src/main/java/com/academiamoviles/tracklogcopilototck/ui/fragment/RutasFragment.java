@@ -16,6 +16,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -206,7 +208,7 @@ public class RutasFragment extends BaseLoadFragment {
     private void getPois() {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("usuarioWeb", myApp.objUser.userWeb);
-
+        Log.d("MAS", jsonObject.toString());
         taskPois = new HttpAsyncTask("poi", jsonObject.toString());
         taskPois.setCallback(new BaseAsyncTask.Callback() {
             @Override
@@ -214,8 +216,10 @@ public class RutasFragment extends BaseLoadFragment {
                 //hideProgress();
                 if (resultCode == BaseAsyncTask.RESULT_OK) {
                     try {
+                        Log.d("AVERR", result.toString());
                         poi_response = Poi_Response.fromJson((String) result);
                         Poi_Response.saveIS(getActivity(), (String) result);
+//                        Log.d("UPDATE", result);
                         //updateList();
                         getPoisPorRuta();
                     } catch (Exception e) {
@@ -244,20 +248,30 @@ public class RutasFragment extends BaseLoadFragment {
         JsonObject jsonObject = new JsonObject();
         jsonObject.add("ruta_id", array);
 
+        Log.d("JSONNN", jsonObject.toString());
         taskPois = new HttpAsyncTask("poi/rutas", jsonObject.toString());
         taskPois.setCallback(new BaseAsyncTask.Callback() {
             @Override
             public void onPostExecuteTask(int requestCode, int resultCode, Object result) {
                 hideProgress();
                 if (resultCode == BaseAsyncTask.RESULT_OK) {
+
                     try {
                         JSONObject object1 = new JSONObject((String) result);
                         JSONArray jsonArray = new JSONArray(object1.getString("data"));
+                        Log.d("resultt", result.toString());
+                        Log.d("agregueAQUI2", String.valueOf(poi_response.listaPois.size()));
                         for (int i = 0; i < jsonArray.length(); i++) {
                             JSONObject object = jsonArray.getJSONObject(i);
+                            Log.d("VER", "onPostExecuteTask222: ");
+                            Log.d("TAMANO", String.valueOf(poi_response.listaPois.size()));
                             for(int j=0; j<poi_response.listaPois.size();j++){
+                                Log.d("VER", "onPostExecuteTask: ");
+                                Log.d("AQUIInCodPi", String.valueOf(object.getInt("nCodPoi")));
+                                Log.d("AQUIInCodPi", String.valueOf(poi_response.listaPois.get(j).nCodPoi));
                                 if(object.getInt("nCodPoi") == poi_response.listaPois.get(j).nCodPoi){
                                     poi_response.listaPois.get(j).nCodRutas.add(object.getInt("nCodRut"));
+
                                 }
                             }
                         }
@@ -351,7 +365,7 @@ public class RutasFragment extends BaseLoadFragment {
 								return;
 							}
 							Plates p = listPlates.get(pos - 1);
-							startCopilotoWithPlate(p);
+							startCopilotoWithPlate(p); // llama al mapa add time aqui
 						}
 					}).setNegativeButton("Cancelar", new OnClickListener() {
 						@Override
@@ -385,9 +399,16 @@ public class RutasFragment extends BaseLoadFragment {
 				}).create().show();
     }
     private void startCopilotoWithPlate(Plates plate) {
+        //envia placa y usuario(nuevo o existente) e inicia la ruta
+        //pasar el tiempo como parametro
     	Configuration.userPlate = new UserPlate(users, plate);
         Intent intent = new Intent(getActivity(), CopilotoActivity.class);
+        Log.d("ENVIANDO DATA CodRuta: ", String.valueOf(ruta_select.nCodRuta));
+        Log.d("ENVIANDO DATA ID: ", String.valueOf(myApp.objUser.userId));
+        Log.d("ENVIANDO DATA Atrib: ", String.valueOf(myApp.objUser.attribute));
+        Log.d("ENVIANDO DATA Web: ", String.valueOf(myApp.objUser.userWeb));
         intent.putExtra(CopilotoActivity.COD_RUTA, ruta_select.nCodRuta);
+        intent.putExtra(CopilotoActivity.SHOW_MAP, myApp.objUser.attribute);//reci
         getActivity().startActivity(intent);
     }
 

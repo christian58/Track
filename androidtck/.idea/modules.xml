@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/androidtck.iml" filepath="$PROJECT_DIR$/androidtck.iml" group="androidtck" />
+      <module fileurl="file://$PROJECT_DIR$/androidtck.iml" filepath="$PROJECT_DIR$/androidtck.iml" />
     </modules>
   </component>
 </project>

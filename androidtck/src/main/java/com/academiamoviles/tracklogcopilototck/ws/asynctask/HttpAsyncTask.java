@@ -49,6 +49,7 @@ public class HttpAsyncTask extends BaseAsyncTask<String, Void, String> {
 
         HttpPoster httpPoster = new HttpPoster();
         httpPoster.setUrl(Constants.URL + getWs());
+        Log.d("ResCodea", String.valueOf(Constants.URL) + getWs()); // http://tracklogservice.com:8080/ws/usuario/login
         httpPoster.setRequest(getRequest());
 
         try {

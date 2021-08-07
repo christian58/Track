@@ -122,8 +122,8 @@ public class HttpPoster {
             writer.close();
             os.close();
 
-            //Log.d(TAG, String.format("RQ:%s", this.request));
-            //Log.d(TAG, String.format("URL:%s", this.url));
+            Log.d(TAG, String.format("RQ:%s", this.request));
+            Log.d(TAG, String.format("URL:%s", this.url));
 
             if (conn.getOutputStream() != null) {
                 Log.d(TAG, String.format("UPLOADBYTES:%s byte", this.request.getBytes().length));

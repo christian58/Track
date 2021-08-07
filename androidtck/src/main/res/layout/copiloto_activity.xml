@@ -6,7 +6,7 @@
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="20dp"
         android:background="?attr/colorPrimary"
         android:minHeight="?attr/actionBarSize"
         android:navigationIcon="?attr/homeAsUpIndicator"
@@ -16,17 +16,22 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textAlignment="center"
+
             android:gravity="center"
+
+            android:textSize="17dp"
             android:text="@string/copiloto"
             android:textColor="@android:color/white"
             android:paddingRight="@dimen/touchable_target"
             android:textAppearance="@style/TextAppearance.AppCompat.Title"
-            android:visibility="gone"/>
+            android:visibility="visible"/>
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:src="@drawable/v1_logo"
             android:padding="6dp"
+            android:visibility="gone"
             android:layout_marginRight="@dimen/touchable_target"/>
 
     </androidx.appcompat.widget.Toolbar>

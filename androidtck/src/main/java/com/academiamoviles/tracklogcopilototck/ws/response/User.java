@@ -36,6 +36,10 @@ public class User implements Parcelable{
     @SerializedName("msg")
     public String msg;
 
+    @Expose
+    @SerializedName("cFlagAmb")
+    public String cFlagAmb;
+
 
     public User(){}
 
@@ -44,6 +48,7 @@ public class User implements Parcelable{
         attribute = in.readInt();
         userWeb = in.readString();
         idEmpresa = in.readString();
+        cFlagAmb = in.readString();
     }
 
     @Override
@@ -57,6 +62,7 @@ public class User implements Parcelable{
         dest.writeInt(attribute);
         dest.writeString(userWeb);
         dest.writeString(idEmpresa);
+        dest.writeString(cFlagAmb);
     }
 
     @SuppressWarnings("unused")

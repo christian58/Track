@@ -3,8 +3,12 @@ package com.academiamoviles.tracklogcopilototck.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Build;
+import android.util.Log;
 
 import com.academiamoviles.tracklogcopilototck.model.Incidences;
 import com.academiamoviles.tracklogcopilototck.model.Paths;
@@ -13,6 +17,12 @@ import com.academiamoviles.tracklogcopilototck.model.PlatesHasPaths;
 import com.academiamoviles.tracklogcopilototck.model.Users;
 import com.academiamoviles.tracklogcopilototck.ui.Configuration;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -26,6 +36,7 @@ import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String DBNAME = "database.db";
     public static  String DBLOCATION ="data/data/com.academiamoviles.tracklogcopilototck/databases/";
+    public static final int DATABASE_VERSION = 1;
     private Context mContext;
     protected SQLiteDatabase mDatabase;
 
@@ -34,15 +45,55 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public DatabaseHelper(Context context){
         super(context, DBNAME, null, 1);
         this.mContext = context;
-        if(android.os.Build.VERSION.SDK_INT >= 17) {
+        Log.d("ENTRO", "DatabaseHelper: ");
+        if(android.os.Build.VERSION.SDK_INT == Build.VERSION_CODES.P) {
+            Log.d("QUE", "AQUI: ");
+
+//            SQLiteOpenHelper helper = new SQLiteOpenHelper(context, DBNAME, null, DATABASE_VERSION) {
+//                @Override
+//                public void onCreate(SQLiteDatabase db) {
+//                    db.disableWriteAheadLogging();  // Here the solution
+//                    super.onOpen(db);
+//                }
+//
+//                @Override
+//                public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+//
+//                }
+//            };
+//            SQLiteDatabase database = helper.getReadableDatabase();
+//            DBLOCATION = database.getPath();
+//            Log.d("QUE", "AQUI: ");
+//            Log.d("ENTRO0", DBLOCATION);
             DBLOCATION = context.getApplicationInfo().dataDir + "/databases/";
+        } else
+        if(android.os.Build.VERSION.SDK_INT >= 17) {
+//            Log.d("ENTRO", "DatabaseHelper: 17 ");
+            DBLOCATION = context.getApplicationInfo().dataDir + "/databases/";
+            Log.d("ENTRO1", DBLOCATION);
         } else {
+//            Log.d("ENTRO", "DatabaseHelper:1 ");
             DBLOCATION = "/data/data/" + context.getPackageName() + "/databases/";
+            Log.d("ENTRO2", DBLOCATION);
         }
+
     }
+
+
+
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
+        sqLiteDatabase.disableWriteAheadLogging();  // Here the solution
+        super.onOpen(sqLiteDatabase);
+//        DataAux dbhelperr = new DataAux(mContext);
+//        try {
+//            dbhelperr.createDatabase();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        mDatabase = dbhelperr.myDataBase;
+//        mDatabase = dbhelperr.getWritableDatabase();
 
     }
 
@@ -51,13 +102,132 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     }
 
+    private void copyDatabase() throws IOException {
+        InputStream myInput = mContext.getAssets().open("database.db");
+        String outputFileName = mContext.getDatabasePath(DBNAME).getPath();
+        OutputStream myOutput = new FileOutputStream(outputFileName);
+
+        byte [] buffer = new byte[1024];
+        int lenght;
+        while((lenght = myInput.read(buffer))>0){
+            myOutput.write(buffer,0,lenght);
+        }
+        myOutput.flush();
+        myOutput.close();
+        myInput.close();
+    }
 
     public void openDatabase(){
+        Log.d("PATHTF", "YA");
         String dbPath= mContext.getDatabasePath(DBNAME).getPath();
+        Log.d("PATHTF", "YAEND");
+//        Log.d("PATHTF", String.valueOf(mDatabase.isOpen()));
+
         if(mDatabase != null && mDatabase.isOpen()){
             return;
         }
+        Log.d("PATH", dbPath);
+
+//        if (android.os.Build.VERSION.SDK_INT >= 9) {
+//            MySQLiteOpenHelper helper = new MySQLiteOpenHelper();
+//            SQLiteDatabase database = helper.getReadableDatabase();
+//            myPath = database.getPath();
+//
+//        } else {
+//            String DB_PATH = Environment.getDataDirectory() + "/data/my.trial.app/databases/";
+//            myPath = DB_PATH + dbName;
+//        }
+
+
         mDatabase = SQLiteDatabase.openDatabase(dbPath,null, SQLiteDatabase.OPEN_READWRITE);
+//        mDatabase.disableWriteAheadLogging();
+
+        Log.d("PATHTFFf", String.valueOf(mDatabase.isOpen()));
+//        Cursor cursorr = mDatabase.rawQuery("select count(*) from users",null);
+//        Cursor cursorr = mDatabase.rawQuery("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users'",null);
+        Cursor cursorr = mDatabase.rawQuery("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users'",null);
+//        Cursor cursorra = mDatabase.rawQuery("SELECT count(*) FROM users",null);
+//        int countt = -2;
+        if (!cursorr.moveToFirst())
+        {
+           //cursorr.close();
+//            countt = 00;
+        }
+        int count = cursorr.getInt(0);
+
+//        Log.d("PATH--00", String.valueOf(countt));
+        Log.d("PATH--11", String.valueOf(count));
+        if(cursorr.getInt(0)== 0){
+            //copia la bd
+//            createDatabase1();
+            Log.d("PLS", "CREATE DATABASE: ");
+            String query1 = "CREATE TABLE \"paths\" ( \"idPaths\" INTEGER PRIMARY KEY AUTOINCREMENT, \"nCodRuta\" INTEGER);";
+            String query2 = "CREATE TABLE \"incidences\" (\"idIncidences\" INTEGER PRIMARY KEY AUTOINCREMENT, \"idPlates_has_paths\" INTEGER, \"speed\" INTEGER, \"excess\" INTEGER,\"latitude\" REAL,\"longitude\" REAL, \"register\" TEXT,\"idgroup\" INTEGER);";
+            String query3 = "CREATE TABLE \"plates\" ( \"idPlates\" INTEGER PRIMARY KEY AUTOINCREMENT, \"serie\" TEXT, \"idUsers\" INTEGER);";
+            String query4= "CREATE TABLE \"plates_has_paths\" (\"idPlates_has_paths\" INTEGER PRIMARY KEY AUTOINCREMENT, \"idPlates\" INTEGER, \"idPaths\" INTEGER, \"date\" TEXT);";
+            String query5 = "CREATE TABLE sqlite_sequence(name,seq);";
+            String query6 = "CREATE TABLE \"users\" (\"idUsers\" INTEGER PRIMARY KEY AUTOINCREMENT, \"firstname\" TEXT, \"lastname\" TEXT, \"phone\" TEXT, \"username\" TEXT);";
+
+            String query7 = "CREATE TABLE \"plates_has_paths_times\" (\"idPlates_has_paths_times\" INTEGER PRIMARY KEY AUTOINCREMENT, \"idPlates_has_paths\" INTEGER, \"time\" INTEGER);";
+
+            mDatabase.execSQL(query1);
+            mDatabase.execSQL(query2);
+            mDatabase.execSQL(query3);
+            mDatabase.execSQL(query4);
+//            mDatabase.execSQL(query5);
+            mDatabase.execSQL(query6);
+            mDatabase.execSQL(query7);
+
+            Log.d("PLSEND", "CREATE DATABASE: END ");
+
+        }
+
+        Cursor cursorTime = mDatabase.rawQuery("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='plates_has_paths_times'",null);
+        if (!cursorTime.moveToFirst())
+        {
+            //cursorr.close();
+//            countt = 00;
+        }
+
+        if(cursorTime.getInt(0)== 0){
+            //copia la bd
+//            createDatabase1();
+
+
+            String query7 = "CREATE TABLE \"plates_has_paths_times\" (\"idPlates_has_paths_times\" INTEGER PRIMARY KEY AUTOINCREMENT, \"idPlates_has_paths\" INTEGER, \"time\" INTEGER);";
+
+
+            mDatabase.execSQL(query7);
+
+            Log.d("PLSEND", "TABLE TIME: END ");
+
+        }
+
+        Log.d("PATH111", String.valueOf(cursorr));
+        Log.d("PATH113", String.valueOf(cursorr.getCount()));
+//        SELECT count(*) FROM
+
+//        mDatabase.disableWriteAheadLogging();
+        Log.d("PATH11", String.valueOf(mDatabase));
+//        mDatabase.disableWriteAheadLogging();
+//        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+//            MySQLiteOpenHelper helper = new MySQLiteOpenHelper();
+//            SQLiteDatabase database = helper.getReadableDatabase();
+//            myPath = database.getPath();
+//
+//        } else {
+//            String DB_PATH = Environment.getDataDirectory() + "/data/my.trial.app/databases/";
+//            myPath = DB_PATH + dbName;
+//        }
+//
+//        checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READWRITE);
+//        checkDB.disableWriteAheadLogging();
+
+
+
+
+
+
     }
 
     public void closeDatabase(){
@@ -114,7 +284,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cursor.moveToFirst();
         while(!cursor.isAfterLast()){
             //users = new Users(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4));
-            Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(cursor.getString(6));
+            Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(cursor.getString(6)); //column register
             incidences = new Incidences(cursor.getInt(1),cursor.getInt(2), cursor.getInt(3),cursor.getDouble(4), cursor.getDouble(5), date, cursor.getInt(7));
             incidences.setIdIncidences(cursor.getInt(0));
             incidencesList.add(incidences);
@@ -156,6 +326,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         nuevoRegistro.put("idPaths",platesHasPaths.getIdPaths()+"");
         nuevoRegistro.put("date", Configuration.createFormat(platesHasPaths.getDate()));
 
+        Log.d("FormatoTime", Configuration.createFormat(platesHasPaths.getDate()));
         long idPltesHasPaths= mDatabase.insert("plates_has_paths", null, nuevoRegistro);
 
         //mDatabase.execSQL("INSERT INTO plates_has_paths (idPlates, idPaths, date) VALUES ('"+platesHasPaths.getIdPlates()+"','"+platesHasPaths.getIdPaths()+"','"+platesHasPaths.getDate().toString()+"')");
@@ -165,6 +336,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         closeDatabase();
 
         return (int) idPltesHasPaths;
+    }
+    public void createPlatePathsTime(int idPlatesHasPaths, int time){
+        openDatabase();
+
+        ContentValues nuevoRegistro = new ContentValues();
+        nuevoRegistro.put("idPlates_has_paths", idPlatesHasPaths+"");
+        nuevoRegistro.put("time",time+"");
+
+
+        long idPltesHasPaths= mDatabase.insert("plates_has_paths_times", null, nuevoRegistro);
+
+        //mDatabase.execSQL("INSERT INTO plates_has_paths (idPlates, idPaths, date) VALUES ('"+platesHasPaths.getIdPlates()+"','"+platesHasPaths.getIdPaths()+"','"+platesHasPaths.getDate().toString()+"')");
+
+        //mDatabase
+
+        closeDatabase();
+
+        //return (int) idPltesHasPaths;
     }
 
 
@@ -267,8 +456,56 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return plates;
     }
 
+    public int getTimeByIdPlatesHasPaths(int id){
+        Log.d("AQUI", "getTimeByIdPlatesHasPaths: ");
+        int time=0;
+        openDatabase();
+        Cursor cursor =mDatabase.rawQuery("SELECT count(*) FROM plates_has_paths_times WHERE idPlates_has_paths=" + id, null);
+        cursor.moveToFirst();
+
+//        if (!cursorr.moveToFirst())
+//        {
+//            //cursorr.close();
+////            countt = 00;
+//        }
+//        int count = cursorr.getInt(0);
+//
+////        Log.d("PATH--00", String.valueOf(countt));
+//        Log.d("PATH--11", String.valueOf(count));
+        if(cursor.getInt(0)== 0){
+            time=0;
+        }
+        else{
+            Cursor cursor2 =mDatabase.rawQuery("SELECT time FROM plates_has_paths_times WHERE idPlates_has_paths=" + id, null);
+            cursor2.moveToFirst();
+            time = cursor2.getInt(0);
+        }
+
+//        time = cursor.getInt(0);
+//        Log.d("tiempof", String.valueOf(cursor.getInt(0)));
+//        Log.d("tiempof", String.valueOf(cursor.getInt(1)));
+//        time = new Plates(cursor.getString(1),cursor.getInt(2));
+//        plates.setIdPlates(cursor.getInt(0));
+        cursor.close();
+        closeDatabase();
+        return time;
+    }
+
     public void createUser(Users users){
         openDatabase();
+
+//        Cursor c = db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null);
+
+//        Boolean a = mDatabase.rawQuery("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='table_name'");
+//        Cursor cursor =mDatabase.rawQuery("SELECT count(*) FROM users", null);
+
+//        if (c.moveToFirst()) {
+//            while ( !c.isAfterLast() ) {
+//                Toast.makeText(activityName.this, "Table Name=> "+c.getString(0), Toast.LENGTH_LONG).show();
+//                c.moveToNext();
+//            }
+//        }
+
         if(!checkDataExist("users","username",users.getUsername())){
             mDatabase.execSQL("INSERT INTO users (firstname,lastname,phone,username) VALUES ('"+users.getFirstname()+"','"+users.getLastname()+"','"+users.getPhone()+"','"+users.getUsername()+"')");
 
@@ -288,11 +525,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public boolean checkDataExist(String tableName, String dbfield, String fieldValue) {
         String Query = "Select * from " + tableName + " where " + dbfield + " = '" + fieldValue+"'";
-        Cursor cursor = mDatabase.rawQuery(Query, null);
+        String Query1 = "Select * from " + tableName + " where " + dbfield + " = \'" + fieldValue+"\'";
+
+        Log.d("ANTERROR", "antes del error: ");
+        Log.d("ANTERRORQ", Query);
+        Log.d("ANTERRORQ1", Query1);
+        Cursor cursor = mDatabase.rawQuery(Query, null);  //error
+
+        Log.d("POSERROR", String.valueOf(cursor));
         if(cursor.getCount() <= 0){
             cursor.close();
             return false;
         }
+
         cursor.close();
         return true;
     }

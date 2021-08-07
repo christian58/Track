@@ -9,6 +9,7 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -119,7 +120,7 @@ import org.osmdroid.tileprovider.modules.SqliteArchiveTileWriter;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
-import org.osmdroid.views.MapView;
+//import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.gestures.RotationGestureOverlay;
 
@@ -137,26 +138,50 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
+
+//import com.mapbox.android.accounts.R;
+
+import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.camera.CameraPosition;
+import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.maps.MapView;
+import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.MapboxMapOptions;
+import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.maps.Style;
+
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
+
+//import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
+//import com.google.
 /**
  * Created by Android on 07/02/2017.
  */
 //OnCameraIdleListener, OnCameraMoveStartedListener, OnCameraMoveListener, OnCameraMoveCanceledListener
 public class CopilotoFragment extends BaseFragment implements LocationListener, View.OnClickListener {
 
+
+    Boolean cargarMarker = true;
+
+
+
+    Date currentTime;
     /***   OSMDROID ****/
+//    Log.d
 
     private static int REQUEST_WRITE_STORAGE = 1;
 
     Context context;
 
-    MapView map;
+//    MapView map;
     IMapController mapController;
     GeoPoint startPoint;
     Marker m;
+//     myLocationoverlay = new MyLocationOverlay(getActivity(), openMapView);
+
 
 
     public RotationGestureOverlay mRotationGestureOverlay;
@@ -181,14 +206,28 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
     private static final String MAPVIEW_BUNDLE_KEY = "MapViewBundleKey";
 //    private MapView mMapView;
 //    private GoogleMap mapCurrent;
+
 //    private Marker auto;
 
-    float auxPosLat=(float)-12.090503367;
-    float auxPosLon=(float)-77.020577392;
+    //-16.425117, -71.527268 Test multi point MUNICIPALIDAD
+    float auxPosLat=(float)-16.425117;
+    float auxPosLon=(float)-71.527268;
+//CERRO
+//    float auxPosLat=(float)-16.433927;
+//    float auxPosLon=(float)-71.538634;
+//    ,
+
+//    float auxPosLat=(float)-16.438761;
+//    float auxPosLon=(float)-71.539128;
+
+    //-16.430484, -71.534597
+    //-16.434042, -71.539079 punto cerca
 //-12.091400, -77.027060   -12.090503367,-77.020577392
-    float auxPosLatPos=(float)-12.090503367;
-    float auxPosLonPos=(float)-77.020577392;
-    boolean cambio = false;
+//    -13.844449, -72.225149    -14.017981, -71.973300
+    float auxPosLatPos=(float)-16.431228;
+    float auxPosLonPos=(float)-71.538901;
+//    -16.431228, -71.538901
+    boolean cambio = true;
 
     float angle = 0;
     float angleTemp = 0;
@@ -220,7 +259,7 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
     }
 
     private void upDateMap(){
-        Log.d("ACTUALIZACION", "Region downloaded ssssuccessfully.");
+//        Log.d("ACTUALIZACION", "Region downloaded ssssuccessfully.");
     }
 
 
@@ -240,23 +279,28 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
     }
 
     // The minimum distance to change Updates in meters
+//    private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 0; // 1 metro
     private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 0; // 1 metro
-
     // The minimum time between updates in milliseconds
-    private static final long MIN_TIME_BW_UPDATES = 1 * 1000; // 1 segundo
+//    private static final long MIN_TIME_BW_UPDATES = 5 * 1000; // 1 segundo
+    private static final long MIN_TIME_BW_UPDATES = 1; // 1 segundo
 
     //Mensajes
     private static final String MENSAJE_FUERA_CERCO = "No se encuentra en ningún cerco, regrese a la ruta";
     //private static final String MENSAJE_EXCESO_VELOCIDAD = "Exceso de velocidad en el cerco: %s, baje su velocidad a: %d kilómetros por hora";
     private static final String MENSAJE_EXCESO_VELOCIDAD = "Está excediendo la velocidad, su límite es: %d kilómetros por hora";
     private static final String MENSAJE_INGRESO_CERCO = "Ingresó en el cerco: %s, la velocidad máxima es: %d kilómetros por hora.";
-    private static final String MENSAJE_CERCA_POI = "Esta cerca del punto: %s";
-    private static final String MENSAJE_X_DICTANCIA_POI = "Está a %s metros del punto %s ";
+    private static final String MENSAJE_NOMBRE_CERCO = "Esta en el cerco: %s, la velocidad máxima es: %d kilómetros por hora.";
+    private static final String MENSAJE_CERCA_POI = "Esta cerca del punto: %s, la velocidad máxima es: %d kilómetros por hora.";
+    private static final String MENSAJE_X_DICTANCIA_POI = "Está a %s metros del punto %s, la velocidad máxima es: %d kilómetros por hora. ";
     private static final String MENSAJE_CERCO_NO_ENCONTRADO = "Cerco no encontrado.";
     private static final String MENSAJE_CERCA_VELOCIDAD_LIMITE = "Está cerca de la velocidad límite de: %d kilómetros por hora";
 
-    private static final long MIN_DISTANCIA_POI = 200;
+    private static final long MIN_DISTANCIA_POI = 210;
+    private static final long MIN_DISTANCIA_POI_OUT = 40;
+    Boolean boolShowMarker_out = false;
     private static final int RANGO_CERCA_VELOCIDAD_LIMITE = 2;
+
 
     //Location Manager
     boolean canGetLocation;
@@ -276,9 +320,36 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
     TextView txtVelocidadGPS2, txtVelocidadCerco2, txtCerco2, txtMensaje2, txtTitulo2, txtUnidadGPS2;
 
     Button btnShowMap;
+    Button btnUpdateMap;
     LinearLayout viewLinear1;
     LinearLayout viewLinear2;
-    Boolean showMap = true;
+    Boolean showMap = false;
+    Boolean btn_Update_Map = true;
+
+    LinearLayout viewMarkerLinear;
+    TextView txtVelocidadMarker;
+    TextView txtPOIMarker;
+    Boolean boolShowMarker = false;
+    Boolean pregunta1 = false;
+    Boolean pregunta2 = false;
+    Boolean pregunta3 = false;
+
+    Boolean mostrarCuadro = false;
+    int quitarMarker = 0;
+    float posMarkerlat=(float)1.090503367;
+    float posMarkerlon=(float)-7.020577392;
+
+    Location posMarker = new Location("");
+//    posLocationMarker.setLongitude(posMarkerlon);
+
+
+
+
+
+    LinearLayout viewMarkerLinear2;
+    TextView txtVelocidadMarker2;
+    TextView txtPOIMarker2;
+
 
     TextToSpeech tts;
     int velocGPS = 0, velocCerco = 0;
@@ -286,6 +357,8 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 
     //Copiloto
     private static final int minPrecision = 50;
+
+    int codRuta2;
 
     Date dateStart;
     int codRuta;
@@ -315,6 +388,9 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 
     boolean firstFueraCerco = true;
 
+    Date repeticionMensajeCerco = new Date();
+    long tiempoRepeticion = 100;
+    boolean reproducirAnuncioMarker = false;
 
     Date dateDentroPoi = new Date();
     long tiempoMinimoPoi = 5;
@@ -352,68 +428,68 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 
 
     List<Poi> poisAux = new ArrayList<>(Arrays.asList(
-            new Poi(12, "POI Curva paucarpata 1", -16.420091, -71.495574),
-            new Poi(12, "POI Normal paucarpata 2", -16.421484, -71.496358),
-            new Poi(12, "POI modulo paucarpata", -16.422814, -71.512971),
-            new Poi(596, "POI rico pollo", -16.424074, -71.515808),
-            new Poi(596, "POI King Broaster", -16.420899, -71.508245),
-            new Poi(596, "POI Curva Salaverry", -16.433814, -71.537962)
+            new Poi(12, "POI Curva paucarpata 1 (90 km/h)", -16.420091, -71.495574),
+            new Poi(12, "POI Normal paucarpata 2 (100 km/h)", -16.421484, -71.496358),
+            new Poi(12, "POI modulo paucarpata (20 km/h)", -16.422814, -71.512971),
+            new Poi(596, "POI rico pollo (50 km/h)", -16.424074, -71.515808),
+            new Poi(596, "POI King Broaster (60 km/h)", -16.420899, -71.508245),
+            new Poi(596, "POI Curva Salaverry (80 km/h)",-16.433585, -71.539944)
 
+//
+            //37.422065, -122.082955
 
 
             ));
+
+    Boolean flagMap = false;
+
+    Boolean showMarkersTotal = true;
+
+    private MapView mapView;
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+//
+        Mapbox.getInstance(getContext(), getString(R.string.mapbox_access_token));
 
+//        Mapbox.getInstance(this, getString(R.string.mapbox_access_token));
+
+        currentTime = Calendar.getInstance().getTime();
+
+
+        //verifyIncidences(velocGPS,  velocCerco, 0, 0);
         /******** OSMDROID ********/
-
-//        ActivityCompat.requestPermissions(requireActivity(),
-//                new String[]{WRITE_EXTERNAL_STORAGE},
-//                REQUEST_WRITE_STORAGE);
-//
-//        ActivityCompat.requestPermissions(requireActivity(),
-//                new String[]{READ_EXTERNAL_STORAGE, ACCESS_FINE_LOCATION}, 1);
-//
-//        ////context = this;
-//        //        context = getApplicationContext();
-//        context = getContext();
-//        org.osmdroid.config.Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
-//
-//
-//        File osmdroid = new File(Environment.getExternalStorageDirectory().getPath(), "Download/osmdroid");
-//        File tiles = new File(osmdroid.getPath(), "tiles");
-//
-//        org.osmdroid.config.Configuration.getInstance().setOsmdroidBasePath(osmdroid);
-//        org.osmdroid.config.Configuration.getInstance().setOsmdroidTileCache(tiles);
-//
-//        if (osmdroid.isDirectory()) {
-//            Log.d("File", "Osmdroid isDirectory");
-//        }
 
 
 //        Mapbox.getInstance((getContext()), "pk.eyJ1IjoiY2hyaXN0aWFuNTgiLCJhIjoiY2s5eGVkNTk5MDAwNDNscGllNXVyY2FmaSJ9.LF3Yh_TfhQMc3O-DYP1d-Q");
 
         codRuta = getActivity().getIntent().getIntExtra(CopilotoActivity.COD_RUTA, 0);
+        codRuta2 = getActivity().getIntent().getIntExtra(CopilotoActivity.COD_RUTA_2, 0);
 
+//        Log.d(TAG, "onCreate: ");
 
         mDBHelper = new DatabaseHelper(getContext());
 
         Paths paths = mDBHelper.getPathsByCodRuta(codRuta);
 
-        PlatesHasPaths platesHasPaths = new PlatesHasPaths(Configuration.userPlate.getPlates().getIdPlates(),paths.getIdPaths(),new Date());
-        idPlatePaths = mDBHelper.createPlatePaths(platesHasPaths);
+        PlatesHasPaths platesHasPaths = new PlatesHasPaths(Configuration.userPlate.getPlates().getIdPlates(),paths.getIdPaths(),new Date()); // crea ahora
+        idPlatePaths = mDBHelper.createPlatePaths(platesHasPaths); // id de la ruta creada  date de inicio
+//        Log.d("IDD", String.valueOf(idPlatePaths));
+        /*** LLAMAR A METODOS PARA CREAR UNA TABLA CON ESE ID Y DATOS***/
+
         Configuration.IDPLATES_HAS_PATHS=idPlatePaths;
         Configuration.COD_RUTA = codRuta;
+//        Log.d("IDD?2", String.valueOf(Configuration.IDPLATES_HAS_PATHS));
 
+//        locationStart.setTime(100);
 
-
+//        Log.d("entro?", "onCreate: ");
         getDatos();
         createPolygons();
         initTts();
-
+//        Log.d("entro?", "onCreateSalio  : ");
         cOrange = ContextCompat.getColor(getActivity(), R.color.colorGreen);
         cRed = ContextCompat.getColor(getActivity(), R.color.colorRed);
         cRed2 = ContextCompat.getColor(getActivity(), R.color.colorRed2);
@@ -430,6 +506,23 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 
         myApp = (MyApp) getActivity().getApplication();
 
+        //int showMapa = mDBHelper.getUserByUsername(myApp.objUser.attribute);
+        //Log.d("SHOWMAPA:" , String.valueOf(getActivity().getIntent().getIntExtra(CopilotoActivity.SHOW_MAP, 0))+"/");
+
+        String auxBool = String.valueOf(getActivity().getIntent().getIntExtra(CopilotoActivity.SHOW_MAP, 0));
+       // Log.d("SHOWMAPAUX", auxBool);
+
+        //if(String.valueOf(getActivity().getIntent().getIntExtra(CopilotoActivity.SHOW_MAP, 0))=="1"){
+        String aux2 = "1";
+
+
+
+        // MAP BOX
+
+
+
+
+
 
     }
 
@@ -437,8 +530,8 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
      * Obtiene los datos almacenados en la memoria
      */
     private void getDatos() {
-        Log.d("AVER", "GET DATOS");
-
+//        Log.d("AVER", "GET DATOS");
+        //Log.d("MyApp", String.valueOf(myApp.objUser.userId));
         ruta = new Ruta();
         Ruta_Response ruta_response = Ruta_Response.readIS(getContext());
         for (Ruta item : ruta_response.listaRutas) {
@@ -450,26 +543,27 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
         cercos = new ArrayList<>();
         cercos_Aux = new ArrayList<>();
         Cerco_Response cerco_response = Cerco_Response.readIS(getContext());
-        Log.d("ANTES_CERCO", String.valueOf(cerco_response.listaCercos.size()));
+//        Log.d("SIZE CERCO", String.valueOf(cerco_response.listaCercos.size()));
         for (Cerco item : cerco_response.listaCercos) {
-            Log.d("AVERR", String.valueOf(item.nCodRut) + " == " + codRuta);
+//            Log.d("AVERR", String.valueOf(item.nCodRut) + " == " + codRuta);
             cercos_Aux.add(item);
             if (item.nCodRut == codRuta) {
                 cercos.add(item);
             }
         }
-        Log.d("ANTES SALI CERCO", String.valueOf(cerco_response.listaCercos.size()));
+//        Log.d("POIS DE AREQUIPA", String.valueOf(cerco_response.listaCercos.size()));
         pois = new ArrayList<>();
         Poi_Response poi_response = Poi_Response.readIS(getContext());
         //pois = poi_response.listaPois;
-        Log.d("ANTES", String.valueOf(poi_response.listaPois.size()));
+//        Log.d("POIS DE AREQUIPA", String.valueOf(poi_response.listaPois.size()));
         for (Poi item : poi_response.listaPois) {
-            Log.d("AVERR", String.valueOf(item.nCodRutas));
+//            Log.d("AVERR", String.valueOf(item.nCodRutas));
             if (item.nCodRutas!=null && item.nCodRutas.indexOf(codRuta) != -1) {
-                pois.add(item);
+                pois.add(item); //aqui puedo setearlo en un nuevo campo
+
             }
         }
-        Log.d("ANTES SALI", String.valueOf(poi_response.listaPois.size()));
+//        Log.d(" SALI", String.valueOf(poi_response.listaPois.size()));
 
     }
 
@@ -478,12 +572,12 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
      */
     private void createPolygons() {
         regions = new ArrayList<>();
-        Log.d("CERCO SIZE", String.valueOf(cercos.size()));
+//        Log.d("CERCO SIZE", String.valueOf(cercos.size()));
         for (Cerco item : cercos) {
             List<Point> coords = new ArrayList<>();
-            Log.d("Cerco IN", String.valueOf(item.gPolCer.points.size()));
+//            Log.d("Cerco IN", String.valueOf(item.gPolCer.points.size()));
             for (Cerco.Point point : item.gPolCer.points) {
-                Log.d("PuntosCerco", point.y + " , " + point.x);
+//                Log.d("PuntosCerco", point.y + " , " + point.x);
                 Point point2D = new Point(point.x, point.y);
                 coords.add(point2D);
 
@@ -502,14 +596,14 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
     }
 
     private void obtenerPuntos(){
-        Log.d("CERCO SIZE", String.valueOf(cercos_Aux.size()));
+//        Log.d("CERCO SIZE", String.valueOf(cercos_Aux.size()));
         poisMap = new ArrayList<>();
         Boolean aux = false;
         double x2 = 0;
         double y2 = 0;
         for (Cerco item : cercos_Aux) {
             List<Point> coords = new ArrayList<>();
-            Log.d("Cerco IN", String.valueOf(item.gPolCer.points.size()));
+//            Log.d("Cerco IN", String.valueOf(item.gPolCer.points.size()));
             for (Cerco.Point point : item.gPolCer.points) {
                 //obtenemos todo los puntos de todo los cercos
                 Point point2D = new Point(point.y, point.x);
@@ -567,12 +661,25 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 
     private Drawable resize(Drawable image) {
         Bitmap b = ((BitmapDrawable)image).getBitmap();
-        Bitmap bitmapResized = Bitmap.createScaledBitmap(b, 50, 50, false);
+        Bitmap bitmapResized = Bitmap.createScaledBitmap(b, 40, 40, false);
         return new BitmapDrawable(getResources(), bitmapResized);
     }
     private Drawable resize2(Drawable image) {
+
+        int width= Resources.getSystem().getDisplayMetrics().widthPixels;
+        int height=Resources.getSystem().getDisplayMetrics().heightPixels;
+//        Log.d("MARKERSSIZE_W", String.valueOf(width));
+//        Log.d("MARKERSSIZE_H", String.valueOf(height));
+//        D/MARKERSSIZE_W: 720
+//        D/MARKERSSIZE_H: 1396
+//        D/MARKERSSIZE_W: 1800
+//        D/MARKERSSIZE_H: 2448
+
         Bitmap b = ((BitmapDrawable)image).getBitmap();
-        Bitmap bitmapResized = Bitmap.createScaledBitmap(b, 75, 75, false);
+//        Bitmap bitmapResized = Bitmap.createScaledBitmap(b, 90, 135, false);
+//        Bitmap bitmapResized = Bitmap.createScaledBitmap(b, 45, 67, false);
+//        Bitmap bitmapResized = Bitmap.createScaledBitmap(b, 30, 46, false);
+        Bitmap bitmapResized = Bitmap.createScaledBitmap(b, 20, 30, false);
         return new BitmapDrawable(getResources(), bitmapResized);
     }
 
@@ -582,16 +689,6 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
         View view = inflater.inflate(R.layout.copiloto_fragment, container, false);
 
 
-        /****** OSMdroud*******/
-
-//        ActivityCompat.requestPermissions(getActivity(),
-//                new String[]{WRITE_EXTERNAL_STORAGE},
-//                REQUEST_WRITE_STORAGE);
-//
-//        ActivityCompat.requestPermissions(getActivity(),
-//                new String[]{READ_EXTERNAL_STORAGE, ACCESS_FINE_LOCATION}, 1);
-
-        //context = this;
         context = getContext();
         org.osmdroid.config.Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
 
@@ -601,168 +698,6 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 
         org.osmdroid.config.Configuration.getInstance().setOsmdroidBasePath(osmdroid);
         org.osmdroid.config.Configuration.getInstance().setOsmdroidTileCache(tiles);
-
-        //Log
-        Log.d("File", "osmdroid getAbsolutePath : " + osmdroid.getAbsolutePath());
-        Log.d("File", "osmdroid getPath : " + osmdroid.getPath());
-
-        if (osmdroid.isDirectory()) {
-            Log.d("File", "Osmdroid isDirectory");
-        }
-
-        /****/
-
-        map = view.findViewById(R.id.map);
-        map.setTileSource(TileSourceFactory.MAPNIK);
-
-        map.setTilesScaledToDpi(true);//font scale
-
-        map.setBuiltInZoomControls(true);
-        map.setMultiTouchControls(true);
-        //map.setUseDataConnection(false);
-
-        //sqlwriter
-        String output = osmdroid.getAbsolutePath() + File.separator + "test" + ".sqlite";
-        SqliteArchiveTileWriter writer = null;
-        try {
-            writer = new SqliteArchiveTileWriter(output);
-            Log.d("output", "output : " + output);
-
-        } catch (Exception e) {
-            Log.d("FALLO", "FALLO SALIDA : " + output);
-            e.printStackTrace();
-        }
-
-        mgr = new CacheManager(map, writer);
-
-        map.addMapListener(new DelayedMapListener(new MapListener() {
-            @Override
-            public boolean onScroll(ScrollEvent event) {
-                //download tile cache
-//                BoundingBox bb = map.getBoundingBox();
-//                int currentZoomLevel = (int) map.getZoomLevelDouble();
-//                if (currentZoomLevel > 19) {
-//                    currentZoomLevel = 19;
-//                }
-//                mgr.downloadAreaAsyncNoUI(context, bb, currentZoomLevel, currentZoomLevel, new CacheManager.CacheManagerCallback() {
-//                    @Override
-//                    public void onTaskComplete() {
-//                        Toast.makeText(context, "Download complete!!", Toast.LENGTH_SHORT).show();
-//                    }
-//
-//                    @Override
-//                    public void updateProgress(int progress, int currentZoomLevel, int zoomMin, int zoomMax) {
-//
-//                    }
-//
-//                    @Override
-//                    public void downloadStarted() {
-//
-//                    }
-//
-//                    @Override
-//                    public void setPossibleTilesInArea(int total) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onTaskFailed(int errors) {
-//
-//                    }
-//                });
-
-                Log.d("zoom", "onScroll zoom : " + map.getZoomLevelDouble());
-
-                return false;
-            }
-
-            @Override
-            public boolean onZoom(ZoomEvent event) {
-                map.invalidate();
-                Log.d("zoom", "onZoom zoom : " + map.getZoomLevelDouble());
-                return false;
-            }
-        }, 100));
-
-        //IMapController mapController = map.getController();
-        mapController = map.getController();
-        mapController.setZoom(16.0);
-        //GeoPoint startPoint = new GeoPoint(-12.087704, -77.000295);
-        startPoint = new GeoPoint(-16.412844, -71.525984);
-        mapController.setCenter(startPoint);
-
-        //mapController.zoomTo(Integer.parseInt(15));
-        mapController.zoomTo(16);
-        map.getController().animateTo(startPoint);
-
-
-        mRotationGestureOverlay = new RotationGestureOverlay(context, map);
-        mRotationGestureOverlay.setEnabled(true);
-        map.setMultiTouchControls(true);
-        map.getOverlays().add(this.mRotationGestureOverlay);
-
-
-
-
-        m = new Marker(map);
-        m.setTextLabelBackgroundColor(R.color.colorGreen);
-        m.setTextLabelFontSize(14);
-        m.setTextLabelForegroundColor(R.color.colorRed);
-        //m.setTitle("hello world");
-//must set the icon to null last
-        //m.setIcon(null);
-//        int aux =  R.drawable.vehiculo;
-//        Drawable img = resize(getResources().getDrawable(R.drawable.vehiculo));
-        m.setIcon(resize(getResources().getDrawable(R.drawable.auto11)));
-        m.setPosition(startPoint);
-        map.getOverlays().add(m);
-
-
-//        GeoPoint startPointMa;
-//        startPointMa = new GeoPoint(-16.433057, -71.538417);
-//        Marker ma = new Marker(map);
-//        ma.setTitle("TEST");
-//        ma.setIcon(resize2(getResources().getDrawable(R.drawable.auto1)));
-//        ma.showInfoWindow();
-//        ma.setPosition(startPointMa);
-//        map.getOverlays().add(ma);
-
-
-
-
-        //offline tile to cache
-        //download tile cache
-        mgr = new CacheManager(map);
-        BoundingBox bb = new BoundingBox(-12.070593, -76.978261, -12.103398, -77.029700);
-        mgr.downloadAreaAsync(context, bb, 14, 14, new CacheManager.CacheManagerCallback() {
-            @Override
-            public void onTaskComplete() {
-                Log.d("data", "cache descargado " + map.getZoomLevelDouble());
-                Toast.makeText(context, "Download complete!!", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void updateProgress(int progress, int currentZoomLevel, int zoomMin, int zoomMax) {
-
-            }
-
-            @Override
-            public void downloadStarted() {
-
-            }
-
-            @Override
-            public void setPossibleTilesInArea(int total) {
-
-            }
-
-            @Override
-            public void onTaskFailed(int errors) {
-                Toast.makeText(context, "Fallo complete!!", Toast.LENGTH_SHORT).show();
-                Log.d("cache", "Fallo descarga cache: " + map.getZoomLevelDouble());
-
-            }
-        });
 
 
 /************************/
@@ -784,20 +719,26 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 
 
 
-        viewLinear1 = (LinearLayout) view.findViewById(R.id.contacts_type);
+        viewLinear1 = (LinearLayout) view.findViewById(R.id.contacts_type); //mapa
         viewLinear2 = (LinearLayout) view.findViewById(R.id.contacts_type2);
 
         btnShowMap = (Button) view.findViewById(R.id.btn_update_view);
+//        btnUpdateMap = (Button) view.findViewById(R.id.btn_current_position);
 
         btnShowMap.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if(!showMap){
+
+//                    viewLinear2.setEnabled(false);
+//                    viewLinear1.setEnabled(true);
                     viewLinear2.setVisibility(View.GONE);
                     viewLinear1.setVisibility(View.VISIBLE);
                     showMap=!showMap;
                 }
                 else{
+//                    viewLinear1.setEnabled(false);
+//                    viewLinear2.setEnabled(true);
                     viewLinear1.setVisibility(View.GONE);
                     viewLinear2.setVisibility(View.VISIBLE);
                     showMap=!showMap;
@@ -805,6 +746,24 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 
             }
         });
+
+
+//        if(flagMap){
+//            Log.d("BUTTONMAP", "TRUE: ");
+//            btnShowMap.setVisibility(View.GONE);
+////            btnShowMap.setEnabled(false);
+//        }else{
+//            Log.d("BUTTONMAP", "FALSE: ");
+//        }
+
+
+        viewMarkerLinear = (LinearLayout) view.findViewById(R.id.viewMarker_container);
+        txtVelocidadMarker = (TextView) view.findViewById(R.id.txtVelocidadMarker);
+        txtPOIMarker = (TextView) view.findViewById(R.id.nombrePOI);
+
+        viewMarkerLinear2 = (LinearLayout) view.findViewById(R.id.viewMarker_container2);//viewMarker_container2
+        txtVelocidadMarker2 = (TextView) view.findViewById(R.id.txtVelocidadMarker2);
+        txtPOIMarker2 = (TextView) view.findViewById(R.id.nombrePOI2);
 
 
 //        mapView = (MapView) view.findViewById(R.id.mapView);
@@ -913,31 +872,101 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
      * @return Retorna el POI cercano
      */
     private Poi validate(Location location, List<Poi> pois) {
-        Log.d("MARCADOR", "ENTREEEE " + pois.size());
+
+        mostrarCuadro = false;
         for (Poi poi : pois) {
             Location locationPoi = new Location("");
             locationPoi.setLongitude(poi.nLonPoi);
             locationPoi.setLatitude(poi.nLatPoi);
             float distance = location.distanceTo(locationPoi);
-
-            Log.d("CnombrePoi",String.valueOf(poi.cNomPoi));
-//            Log.d("cPais",String.valueOf(poi.cPaisPoi));
-//            Log.d("cTipo",String.valueOf(poi.cTipoPoi));
-//            Log.d("cNombVia",String.valueOf(poi.cNomViaPoi));
-//            Log.d("cMensaje",String.valueOf(poi.mensaje));
-//            Log.d("cDisPoi",String.valueOf(poi.nDisPoi));
-
+//            Log.d("DIS", "validate: " + distance);
             if (poi.nDisPoi != null) {
-            	if (distance < poi.nDisPoi) {
-            		Log.d("CopilotoFragment", "[Custom] Poi detectado a " + distance);
-            		return poi;
-            	}
-        	} else if (distance < MIN_DISTANCIA_POI) {
-        		Log.d("CopilotoFragment", "[Default] Poi detectado a " + distance);
-                return poi;
+//            if (false) {
+            	if (distance < poi.nDisPoi * 3/2) {
+                    mostrarCuadro = true;
+                    if(!indexMensajesPoiHablados.contains(poi)){
+                        return poi;
+                    }else{
+                        if(reproducirAnuncioMarker){
+                            reproducirAnuncioMarker=false;
+
+                            Integer posParen = poi.cNomPoi.indexOf('(');
+                            if(posParen != -1){
+                                String messageAux = poi.cNomPoi.substring(0,posParen);
+                                Integer posParenEnd = poi.cNomPoi.indexOf(')');
+                                String numeroVelocidad = poi.cNomPoi.substring(posParen, posParenEnd);
+                                int velocidad = Integer.parseInt(numeroVelocidad.replaceAll("[^0-9]+", ""));
+//                            String message = String.format(MENSAJE_CERCA_POI, resultPoi.cNomPoi);
+                                String message = String.format(MENSAJE_CERCA_POI, messageAux,velocidad);
+                                //add to queue message cerco
+                                if(boolShowMarker){
+                                    anuncios.add(0, new Anuncio(AnuncioType.poi, message));
+                                }
+//                            anuncios.add(0, new Anuncio(AnuncioType.poi, message));
+                            }else{
+                                String messageAux = poi.cNomPoi;
+//                            String message = String.format(MENSAJE_CERCA_POI, resultPoi.cNomPoi);
+                                String message = String.format(MENSAJE_CERCA_POI, messageAux,0);
+                                //add to queue message cerco
+                                if(boolShowMarker){
+                                    anuncios.add(0, new Anuncio(AnuncioType.poi, message));
+                                }
+//                            anuncios.add(0, new Anuncio(AnuncioType.poi, message));
+                            }
+
+
+
+                        }
+                    }
+
+//            		return poi;
+            	}else{
+//                    Log.d("DISTANCIA MIN POIQ", "DISTANCIA ES  " + distance);
+                }
+        	} else if (distance < MIN_DISTANCIA_POI * 3/ 2) {
+//                Log.d("DIS", String.valueOf((MIN_DISTANCIA_POI * 3/ 2)));
+                mostrarCuadro = true;
+                if(!indexMensajesPoiHablados.contains(poi)){
+                    return poi;
+                }else{
+                    if(reproducirAnuncioMarker){
+                        reproducirAnuncioMarker=false;
+
+
+                        Integer posParen = poi.cNomPoi.indexOf('(');
+                        if(posParen != -1){
+                            String messageAux = poi.cNomPoi.substring(0,posParen);
+                            Integer posParenEnd = poi.cNomPoi.indexOf(')');
+                            String numeroVelocidad = poi.cNomPoi.substring(posParen, posParenEnd);
+                            int velocidad = Integer.parseInt(numeroVelocidad.replaceAll("[^0-9]+", ""));
+//                            String message = String.format(MENSAJE_CERCA_POI, resultPoi.cNomPoi);
+                            String message = String.format(MENSAJE_CERCA_POI, messageAux,velocidad);
+                            //add to queue message cerco
+                            if(boolShowMarker){
+                                anuncios.add(0, new Anuncio(AnuncioType.poi, message));
+                            }
+//                            anuncios.add(0, new Anuncio(AnuncioType.poi, message));
+                        }else{
+                            String messageAux = poi.cNomPoi;
+//                            String message = String.format(MENSAJE_CERCA_POI, resultPoi.cNomPoi);
+                            String message = String.format(MENSAJE_CERCA_POI, messageAux,0);
+                            //add to queue message cerco
+                            if(boolShowMarker){
+                                anuncios.add(0, new Anuncio(AnuncioType.poi, message));
+                            }
+//                            anuncios.add(0, new Anuncio(AnuncioType.poi, message));
+                        }
+
+
+
+                    }
+                }
+
+
+//                return poi;
             }
         }
-        Log.d("MARCADORR", "SALII");
+//        Log.d("MARCADORR", "SALII");
         return null;
     }
     
@@ -1008,6 +1037,13 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
             txtUnidadGPS.setTextColor(cRed);
             txtUnidadGPS2.setTextColor(cRed);
         } else if (isAmber) {
+//            viewFlash.setBackgroundColor(cOrange);
+//            viewFlash2.setBackgroundColor(cOrange);
+//            txtVelocidadGPS.setTextColor(cOrange);
+//            txtVelocidadGPS2.setTextColor(cOrange);
+//            txtUnidadGPS.setTextColor(cOrange);
+//            txtUnidadGPS2.setTextColor(cOrange);
+
             viewFlash.setBackgroundColor(cAmber);
             viewFlash2.setBackgroundColor(cAmber);
             txtVelocidadGPS.setTextColor(cAmber);
@@ -1023,123 +1059,12 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
             txtUnidadGPS2.setTextColor(cOrange);
         }
 
-        /*
-        int velocity = 0;
-        for (Anuncio anuncio : anuncios) {
-            if (anuncio.tipo == AnuncioType.velocidad) {
-                velocity++;
-            }
-        }
-        int colorActual = 0;
-        Drawable background = viewFlash.getBackground();
-        if (background instanceof ColorDrawable)
-            colorActual = ((ColorDrawable) background).getColor();
-
-        if (velocity > 0) {
-            if (!isFlashing && colorActual == cOrange) {
-                isFlashing = true;
-
-                //changeColor(colorActual, cRed);
-
-                colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(), cRed2, cRed);
-                colorAnimation.setDuration(250); // milliseconds
-                colorAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-
-                    @Override
-                    public void onAnimationUpdate(ValueAnimator animator) {
-                        viewFlash.setBackgroundColor((int) animator.getAnimatedValue());
-                        txtVelocidadGPS.setTextColor(cRed);
-                        txtUnidadGPS.setTextColor(cRed);
-
-                    }
-
-                });
-                colorAnimation.addListener(new Animator.AnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animation) {
-
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        changeToFalseFlashing();
-                        animation.setStartDelay(5000);
-                        animation.start();
-                    }
-
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-                        changeToFalseFlashing();
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animator animation) {
-                    }
-                });
-                colorAnimation.start();
-            }
-
-        } else {
-            if (!isFlashing && colorActual != cOrange) {
-                changeColor(colorActual, cOrange);
-            }
-        }
-        */
-    }
-
-    /*
-    private void changeColor(int fromColor, int toColor) {
-        if (colorAnimation != null) {
-            colorAnimation.cancel();
-        }
-        colorAnimation = ValueAnimator.ofObject(new ArgbEvaluator(), fromColor, toColor);
-        colorAnimation.setDuration(250); // milliseconds
-        colorAnimation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-
-            @Override
-            public void onAnimationUpdate(ValueAnimator animator) {
-                viewFlash.setBackgroundColor((int) animator.getAnimatedValue());
-                txtVelocidadGPS.setTextColor((int) animator.getAnimatedValue());
-                txtUnidadGPS.setTextColor((int) animator.getAnimatedValue());
-
-            }
-
-        });
-        colorAnimation.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                changeToFalseFlashing();
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-            }
-        });
-        colorAnimation.start();
-    }
-    */
-
-    /*
-    private void newColor(int toColor) {
-        int colorActual = 0;
-        Drawable background = viewFlash.getBackground();
-        if (background instanceof ColorDrawable)
-            colorActual = ((ColorDrawable) background).getColor();
-
-        changeColor(colorActual, toColor);
 
     }
-    */
+
+
+
+
 
     private void changeToFalseFlashing() {
         isFlashing = false;
@@ -1199,7 +1124,7 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
     @Override
     public void onResume() {
         super.onResume();
-        map.onResume();
+//        map.onResume();
         //mMapView.onResume();
 //        mapView.onResume();
     }
@@ -1222,63 +1147,30 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
     public void onPause() {
         //mMapView.onPause();
         super.onPause();
-        map.onPause();
-//        mapView.onPause();
-
-//        if (offlineManager != null) {
-//            offlineManager.listOfflineRegions(new OfflineManager.ListOfflineRegionsCallback() {
-//                @Override
-//                public void onList(OfflineRegion[] offlineRegions) {
-//                    if (offlineRegions.length > 0) {
-//                        // delete the last item in the offlineRegions list which will be yosemite offline map
-//                        offlineRegions[(offlineRegions.length - 1)].delete(new OfflineRegion.OfflineRegionDeleteCallback() {
-//                            @Override
-//                            public void onDelete() {
-////                                Toast.makeText(
-////                                        CopilotoFragment.this,
-////                                        getString(R.string),
-////                                        Toast.LENGTH_LONG
-////                                ).show();
-//                            }
-//
-//                            @Override
-//                            public void onError(String error) {
-//                                //Timber.e("On delete error: %s", error);
-//                            }
-//                        });
-//                    }
-//                }
-//
-//                @Override
-//                public void onError(String error) {
-//                    //Timber.e("onListError: %s", error);
-//                }
-//            });
-//        }
+//        map.onPause();
 
         setRetainInstance(true);
 
     }
-
     //OSMdroid
-    @SuppressLint("HandlerLeak")
-    Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            switch(msg.what) {
-                case 1:
-                    GeoPoint point = (GeoPoint) msg.obj;
-                    map.getController().setCenter(point);
-                    Marker marker = new Marker(map);
-                    marker.setPosition(point);
-                    map.getOverlays().clear();
-                    map.getOverlays().add(marker);
-                    map.invalidate();
-                    break;
-            }
-        }
-    };
+//    @SuppressLint("HandlerLeak")
+//    Handler handler = new Handler() {
+//        @Override
+//        public void handleMessage(Message msg) {
+//            super.handleMessage(msg);
+//            switch(msg.what) {
+//                case 1:
+//                    GeoPoint point = (GeoPoint) msg.obj;
+//                    map.getController().setCenter(point);
+//                    Marker marker = new Marker(map);
+//                    marker.setPosition(point);
+//                    map.getOverlays().clear();
+//                    map.getOverlays().add(marker);
+//                    map.invalidate();
+//                    break;
+//            }
+//        }
+//    };
 
     @Override
     public void onDestroy() {
@@ -1307,29 +1199,41 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
      * Inicializa el Location Manager
      */
     private void iniLocation() {
+//        Log.d("location", "entroo: ");
         if (!GPSProviderEnabled(getActivity())) {
+//            Log.d("location", "entroo1: ");
             //this.canGetLocation = false;
-            txtMensaje.setVisibility(View.VISIBLE);
+            txtMensaje.setEnabled(true);
+//            txtMensaje.setVisibility(View.VISIBLE);
         } else {
+//            Log.d("location", "entroo:2 ");
             if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED || ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
                     == PackageManager.PERMISSION_GRANTED) {
 
                 txtMensaje.setVisibility(View.GONE);
+//                txtMensaje.setEnabled(false);
                 this.canGetLocation = true;
-
+//                Log.d("location", "entroo3: ");
                 if (isNetworkEnabled) {
+//                    Log.d("location", "entroo4: ");
                     locationManager.requestLocationUpdates(
                             LocationManager.NETWORK_PROVIDER,
                             MIN_TIME_BW_UPDATES,
                             MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
                 }
-
                 if (isGPSEnabled) {
+//                    Log.d("location", "entroo5: ");
+                    //No entra a esta funcion
                     locationManager.requestLocationUpdates(
                             LocationManager.GPS_PROVIDER,
                             MIN_TIME_BW_UPDATES,
                             MIN_DISTANCE_CHANGE_FOR_UPDATES, this);
+//                    Log.d("AVER", "LAMO?10: ");
+//                    locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);//
+                    locationStart = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER); //add
+//                    mobileLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+//                    Log.d("AVER", "LAMO?11: ");
 
                 }
             }
@@ -1369,69 +1273,39 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
             }
         }
     }
-
+//actual anterior
     public float inclinationAngle(float x1, float y1, float x2, float y2){
         if(x2-x1 != 0){
             float m = (y2-y1)/(x2-x1);
             float angle_rad = (float) Math.atan(m);
             float angle2 = (float) (angle_rad*180/3.1415926);
-            Log.d("ANGLEE", String.valueOf(angle2));
+//            Log.d("ANGLEE", String.valueOf(angle2));
             float distancia = (float) Math.sqrt(Math.pow(x2-x1,2)+ Math.pow(y2-y1,2));
             //0.00003
-            if(distancia > 0.00003){
-                return angle2;
+            if(distancia > 0.0002){//0.00003
+                if(x1-x2<0){
+                    return angle2+180;
+                }
+                return  angle2;
             }
-//        Log.d("X1", String.valueOf(x1));
-//        Log.d("Y1", String.valueOf(y1));
-//        Log.d("X2", String.valueOf(x2));
-//        Log.d("Y2", String.valueOf(y2));
-//        Log.d("RAD", String.valueOf(angle_rad));
 
 
             return  angle;
 //            return  angle2;
 
         }
-        else return angle;
+        else {
+            if(y1-y2>0){
+                return 90;
+            }
+            else return -90;
+
+
+
+        }
 
     }
 
-//    public void addMarker(Poi poiMarker){
-//        LatLng latLngI = new LatLng(poiMarker.nLatPoi, poiMarker.nLonPoi);
-//        //mapCurrent.addMarker(new MarkerOptions().position(latLngI).title(poiMarker.cNomViaPoi));
-//
-//        String s = poiMarker.cNomPoi;
-//        String typeMarker;
-//        BitmapDrawable bitmapdraw; //= (BitmapDrawable)getResources().getDrawable(R.drawable.default1);
-//        //CASE
-//        if (poiMarker.cNomPoi.contains("Curva")) {
-//            // it contains world
-//            bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.curvas);
-//        }
-//        else{
-//            bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.default1);
-//        }
-//
-//        Log.d("NombreMARKER1", String.valueOf(poiMarker.cNomPoi));
-//        int height = 100;
-//        int width = 100;
-//        //LatLng posIni = new LatLng(-12.090503367, -77.020577392);
-//        //BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.curvas);
-//        Bitmap b = bitmapdraw.getBitmap();
-//        Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
-//
-//        MarkerOptions markerOptions = new MarkerOptions();
-//        markerOptions.position(latLngI);
-////        mapCurrent.clear();
-//        markerOptions.title(poiMarker.cNomPoi);
-//        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(smallMarker)).anchor(0.5f,1f);
-////        markerOptions
-//        //markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.vehiculo));
-//        markerOptions.getPosition();
-//        //mapCurrent.addMarker(markerOptions).showInfoWindow();
-//
-//
-//    }
 
     public BitmapDrawable writeOnDrawable(int drawableId, String text){
 
@@ -1451,95 +1325,142 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 
         Canvas canvas = new Canvas(bmm);
         //canvas.text
-        canvas.drawText("GAAAAA", 0, bm.getHeight()/2, textStyle);
+        canvas.drawText(".", 0, bm.getHeight()/2, textStyle);
 
         return new BitmapDrawable(bm);
     }
 
-    public void addMarkerBox(Poi poiMarker){
-
-        GeoPoint startPointM;
-        startPointM = new GeoPoint(poiMarker.nLatPoi, poiMarker.nLonPoi);
-
-        Marker m = new Marker(map);
-        //m.setTextLabelBackgroundColor(R.color.colorGreen);
-        //m.setTextLabelFontSize(14);
-        //m.setTextLabelForegroundColor(R.color.colorRed);
-        //m.setTextLabelFontSize(80);
 
 
-        m.setTitle(poiMarker.cNomPoi);
+    private void addTotalMarker(List<Poi> pois){
+
+        for (Poi poiMarker : pois) {
+//            Log.d("LONG YO", String.valueOf("INGRESANDO"));
+            GeoPoint startPointM;
+            startPointM = new GeoPoint(poiMarker.nLatPoi, poiMarker.nLonPoi);
+
+//            Log.d("PUNTOSSS", poiMarker.cNomPoi);
+//            Marker m = new Marker(map);
 
 
-//must set the icon to null last
-        //m.setIcon(null);
-       // m.setText
-//        m.setEnableTextLabelsWhenNoImage(true);
-        //m.textlabel
-        if (poiMarker.cNomPoi.contains("Curva")) {
-            // it contains world
-            //bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.curvas);
-            //m.setIcon( writeOnDrawable(R.drawable.curvas,poiMarker.cNomPoi));
-            m.setIcon(resize2(getResources().getDrawable(R.drawable.curvas)));
-//            m.setIcon(null);
-//            m.setTextLabelFontSize(500);
+//            Integer posParen = poiMarker.cNomPoi.indexOf('(');
+//            String messageAux;
+//            if(posParen==-1){//sin velocidad, sin parentesis
+//                messageAux = poiMarker.cNomPoi;
+//            }else{//con velocidad-con parentesis
+//
+//                messageAux = poiMarker.cNomPoi.substring(0,posParen);
+//
+//            }
+//
+//            //m.textlabel
+//            if (poiMarker.cNomPoi.contains("Curva")) {
+//                m.setIcon(resize2(getResources().getDrawable(R.drawable.markerr)));
+//            }
+//            else{
+//                m.setIcon(resize2(getResources().getDrawable(R.drawable.markerr)));
+//            }
+//            m.setPosition(startPointM);
+//            m.setAnchor(0.5f,0);
+
+//            map.getOverlays().add(m);
 
         }
-        else{
-            m.setIcon(resize2(getResources().getDrawable(R.drawable.default1)));
-            //bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.default1);
-        }
-        m.showInfoWindow();
-        //m.setIcon(resize(getResources().getDrawable(R.drawable.vehiculo)));
-        m.setPosition(startPointM);
 
-        map.getOverlays().add(m);
-
-
-//        LatLng latLngI = new LatLng(poiMarker.nLatPoi, poiMarker.nLonPoi);
-//        //mapCurrent.addMarker(new MarkerOptions().position(latLngI).title(poiMarker.cNomViaPoi));
-//
-//        String s = poiMarker.cNomPoi;
-//        String typeMarker;
-//        BitmapDrawable bitmapdraw; //= (BitmapDrawable)getResources().getDrawable(R.drawable.default1);
-//        //CASE
-//        if (poiMarker.cNomPoi.contains("Curva")) {
-//            // it contains world
-//            bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.curvas);
-//        }
-//        else{
-//            bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.default1);
-//        }
-//
-//        Log.d("NombreMARKER1", String.valueOf(poiMarker.cNomPoi));
-//        int height = 100;
-//        int width = 100;
-//        //LatLng posIni = new LatLng(-12.090503367, -77.020577392);
-//        //BitmapDrawable bitmapdraw = (BitmapDrawable)getResources().getDrawable(R.drawable.curvas);
-//        Bitmap b = bitmapdraw.getBitmap();
-//        Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
-//
-//        MarkerOptions markerOptions = new MarkerOptions();
-//        markerOptions.position(latLngI);
-////        mapCurrent.clear();
-//        markerOptions.title(poiMarker.cNomPoi);
-////        Icon marke = new Image
-////        //markerOptions.icon()
-////        markerOptions.icon(BitmapDescriptorFactory.fromBitmap(smallMarker)).anchor(0.5f,1f);
-////        markerOptions
-//        //markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.vehiculo));
-//        markerOptions.getPosition();
-//        //mapCurrent.addMarker(markerOptions).showInfoWindow();
 
 
     }
 
+        public void addMarkerBox(Poi poiMarker){
+
+        GeoPoint startPointM;
+        startPointM = new GeoPoint(poiMarker.nLatPoi, poiMarker.nLonPoi);
+
+        Integer posParen = poiMarker.cNomPoi.indexOf('(');
+        String messageAux;
+        if(posParen != -1){
+            messageAux = poiMarker.cNomPoi.substring(0,posParen);
+        }else{
+            messageAux = poiMarker.cNomPoi;
+        }
+
+
+        Integer posParen2 = poiMarker.cNomPoi.indexOf(')');//HERE
+        if(posParen2 != -1){
+            Integer posSpace = poiMarker.cNomPoi.indexOf(' ',posParen);
+            if(posParen2-posParen > 2){
+                String velocidadString = poiMarker.cNomPoi.substring(posParen+1,posSpace);
+
+                posMarker.setLongitude(startPointM.getLongitude());
+                posMarker.setLatitude(startPointM.getLatitude());
+
+
+                posMarkerlon = (float) startPointM.getLongitude();
+                posMarkerlat = (float) startPointM.getLatitude();
+
+                txtVelocidadMarker.setText(velocidadString);
+//                viewMarkerLinear.setEnabled(true);
+                viewMarkerLinear.setVisibility(View.VISIBLE);
+                txtPOIMarker.setText(messageAux);
+
+                if(flagMap){
+//                    viewMarkerLinear2.setEnabled(false);
+                    viewMarkerLinear2.setVisibility(View.GONE);
+                }else{
+//                    viewMarkerLinear2.setEnabled(true);
+                    viewMarkerLinear2.setVisibility(View.VISIBLE);
+                }
+                txtVelocidadMarker2.setText(velocidadString);
+                txtPOIMarker2.setText(messageAux);
+                //viewMarkerLinear2.setVisibility(View.VISIBLE);
+                boolShowMarker = true;
+            }
+        }else{
+            posMarker.setLongitude(startPointM.getLongitude());
+            posMarker.setLatitude(startPointM.getLatitude());
+
+
+            posMarkerlon = (float) startPointM.getLongitude();
+            posMarkerlat = (float) startPointM.getLatitude();
+
+            txtVelocidadMarker.setText("0");
+//            viewMarkerLinear.setEnabled(true);
+            viewMarkerLinear.setVisibility(View.VISIBLE);
+            txtPOIMarker.setText(messageAux);
+
+            if(flagMap){
+//                viewMarkerLinear2.setEnabled(false);
+                viewMarkerLinear2.setVisibility(View.GONE);
+            }else{
+//                viewMarkerLinear2.setEnabled(true);
+                viewMarkerLinear2.setVisibility(View.VISIBLE);
+            }
+            txtVelocidadMarker2.setText("0");
+            txtPOIMarker2.setText(messageAux);
+            //viewMarkerLinear2.setVisibility(View.VISIBLE);
+            boolShowMarker = true;
+        }
+    }
+
     @Override
     public void onLocationChanged(Location location) {
+
+
+
+//        Date currentTime = Calendar.getInstance().getTime();
+//        Log.d("TIEMPOOO: ", String.valueOf(currentTime));
+//-16.438761, -71.539128
+
+//        -16.434042, -71.539079
+//        location.setLatitude(-16.434042);
+//        location.setLongitude(-71.539079);
+//        auxLocation = location;
+//        auxLocation.setLatitude(auxPosLat);
         if (!isProcess) {
 
             isProcess = true;
             try {
+//
 
                 //registrando el uso del app
                 long tiempoUsoApp = getInterval(dateUsoApp.getTime(), new Date());
@@ -1594,6 +1515,7 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
                     isAmber = false;
                 }
 
+//                Log.d("HDP", "onLocationChanged: ");
 
 
                 /****  DEMO  **/
@@ -1601,114 +1523,69 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 //                auxLocation.setLatitude(auxPosLat);
 //                auxLocation.setLongitude(auxPosLon);
 
+//                -13.844449, -72.225149
+
 
                 animationVelocity();
 
                 //validate region
                 Point point = new Point(location.getLongitude(), location.getLatitude()); //original
+
+//                AddMarkerAuto
+
+//                ((CopilotoActivity)getActivity()).AddMarkerAuto(location.getLatitude(),location.getLongitude());
+
 //                Point point = new Point(auxLocation.getLongitude(), auxLocation.getLatitude());
-
-                //ubicacion actual
-                //auto.setPosition(new LatLng( auxPosLat, auxPosLon));
-                //auto.setPosition(new LatLng( -12.091003367, -77.023577392));
-                //auto.setPosition(new LatLng(point.y, point.x));
-
-//                mapCurrent.moveCamera(CameraUpdateFactory.newLatLng(auto.getPosition()));
-//                POS_Actual =
-//                        new CameraPosition.Builder().target(new LatLng(auto.getPosition().latitude, auto.getPosition().longitude))
-//                                .zoom(19f)//modificar de forma dinamica
-//                                .bearing(0) //horizontal
-//                                .tilt(45)   //vertical
-//                                .build();
-//                mapCurrent.moveCamera(CameraUpdateFactory.newCameraPosition(POS_Actual));
-
-
-
-
 
 
 //                //auxPos+=0.001;
-//                auxPosLat-=0.000002;
-//                auxPosLon-=0.00002;
+//                auxPosLat+=0.00002;//TEST
+//                auxPosLon+=0.0002;
 
-//                if(cambio){
-//                auxPosLat-=0.00005;
-//                if(auxPosLat< -12.092864){
-//                    auxPosLon+=0.00004;
-//                }
-//                else{
-//                    auxPosLon-=0.00001;
-//                }
-//
+                /****DEMO***/
+//                if(auxPosLat < -16.427671 && cambio){
+//                    auxPosLat+=0.0005;
 //
 //                }
 //                else{
-//
-//                    auxPosLat-=0.000005;
-//                auxPosLon-=0.00005;
+//                    cambio= false;
+//                    auxPosLon-=0.0004;
+//                    auxPosLat-=0.0005;
 //                }
-//borrado
-                mapController = map.getController();
-                //mapController.setZoom(17.0);
-                //GeoPoint startPoint = new GeoPoint(-12.087704, -77.000295);
-//                startPoint = new GeoPoint(auxPosLat, auxPosLon);
-                startPoint = new GeoPoint( location.getLatitude(),location.getLongitude());
-//                mapController.setCenter(startPoint);
-                m.setPosition(startPoint);
-                mapController.zoomTo(16);
-                map.getController().animateTo(startPoint);
+
+
+
+
+
+//                mapController = map.getController();
+//                startPoint = new GeoPoint( location.getLatitude(),location.getLongitude());
+//                m.setPosition(startPoint);
+//                mapController.zoomTo(15);
+//                map.getController().animateTo(startPoint);
                 angle = inclinationAngle((float) location.getLatitude(), (float) location.getLongitude(),auxPosLatPos,auxPosLonPos);
 
-                map.setMapOrientation(-angle+180); // direccion
-
-                map.getController().animateTo(startPoint);
+//                map.setMapOrientation(-angle); // direccion   map.setMapOrientation(-angle+180);
+//                map.getController().animateTo(startPoint);
                 //map.cam
+                if(showMap){
+                    ((CopilotoActivity)getActivity()).RotationCamera(angle,(float)location.getLongitude(), (float)location.getLatitude());
+                }
+                /******** TEST *********/
 
                 /******DEMO*******/
-//                mapController = map.getController();
-                //mapController.setZoom(17.0);
-                //GeoPoint startPoint = new GeoPoint(-12.087704, -77.000295);
-//                startPoint = new GeoPoint(auxPosLat, auxPosLon);
-                //mapController.setCenter(startPoint);
-//                m.setPosition(startPoint);
-//                mapController.zoomTo(17);
-//
-//
-//                angle = inclinationAngle(auxPosLat,auxPosLon,auxPosLatPos,auxPosLonPos);
-//
-//                map.setMapOrientation(-angle+180); // direccion
-//
-//                map.getController().animateTo(startPoint);
-                //GeoPoint startPoint2 = new GeoPoint(startPoint.getLatitude(),startPoint.getLongitude(),angle);
-                //map.getController().animateTo(startPoint2);
-                //map.getController().setCenter(startPoint);
-//                GeoPoint aa = new GeoPoint(startPoint);
-//                map.getController().animateTo(aa,3.);
 
-//                //angle = inclinationAngle((float) location.getLatitude(), (float) location.getLongitude(),auxPosLatPos,auxPosLonPos);
-//                //if(Math.abs(angle - angleTemp) > 2) angle
-//                Log.d("ANGLE", String.valueOf(angle));
-//                auxPosLatPos = auxPosLat;
-//                auxPosLonPos = auxPosLon;
+                /****REL ***/
                 auxPosLatPos = (float) location.getLatitude();
                 auxPosLonPos = (float) location.getLongitude();
+                /***** TEST ****/
+//                auxPosLatPos = (float) auxLocation.getLatitude();
+//                auxPosLonPos = (float) auxLocation.getLongitude();
 
 
-//                POS_Actual = new CameraPosition.Builder()
-//                        .target(new LatLng(auxPosLat, auxPosLon))      // Sets the center of the map to Mountain View
-//                        .zoom(16)                   // Sets the zoom 17
-//                        .bearing((int)angle + 180)                // Sets the orientation of the camera to east
-//                        .tilt(60)                   // Sets the tilt of the camera to 30 degrees
-//                        .build();                   // Creates a CameraPosition from the builder
-                //currentMapbox.animateCamera(CameraUpdateFactory.newCameraPosition(POS_Actual),2000,null);
-                //mapCurrent.animateCamera(CameraUpdateFactory.newCameraPosition(POS_Actual),2000,null);
 
-                //mapCurrent.setPosition(new LatLng(a_lat, a_lon));
-                //Log.d("MENSAJE","MENSAJEEE");
-                //Log.d("POINT", String.valueOf(location.getLatitude()));
-                //Log.d("POINT", String.valueOf(point.y));
 
                 int index = validate(point, regions);
+
                 if (index != -1) {
 
                     //set current cerco
@@ -1719,6 +1596,7 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 
                     //validate
                     if (!indexMensajesCercoHablados.contains(index)) {
+
                     	indexMensajesCercoHablados.clear();
                         indexMensajesCercoHablados.add(index);
                         String nombre = currentCerco.cNombre;
@@ -1737,6 +1615,30 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
                         txtVelocidadCerco2.setText(getVelocidad(velocCerco));
 
                         firstFueraCerco = true;
+
+                        repeticionMensajeCerco = new Date();
+
+                    }else{
+                        long tiempoMensajeCerco = getInterval(repeticionMensajeCerco, new Date());
+
+                        if(String.valueOf(currentCerco.dRadio) != "null"){
+                            tiempoRepeticion = Long.parseLong(currentCerco.cFlagKpi);
+                        }
+
+//                        if (tiempoMensajeCerco > tiempoRepeticion) {
+                        if (false) {
+                            String nombre = currentCerco.cNombre;
+                            int velocidad = currentCerco.nVelCer;
+                            String mensaje = String.format(MENSAJE_NOMBRE_CERCO, nombre, velocidad);
+                            removeAnuncio(anuncioInvalido.tipo);
+                            removeAnuncio(AnuncioType.cerco);
+
+                            anuncios.add(new Anuncio(AnuncioType.cerco, mensaje));
+                            repeticionMensajeCerco = new Date();
+                            reproducirAnuncioMarker = true;
+                            countAnuncioPoi = 1;
+
+                        }
                     }
                     iOutsideCerco = 0;
                 } else {
@@ -1765,95 +1667,100 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
                     iOutsideCerco++;
                 }
 
+                if(boolShowMarker){
+
+                    float distance = location.distanceTo(posMarker);
+
+                    //220
+                    if(distance < 80){
+                        boolShowMarker_out = true;
+
+                    }
+                    if(boolShowMarker_out){
+
+                        if(distance > MIN_DISTANCIA_POI_OUT){
+                            quitarMarker+=1;
+                            if(quitarMarker>2){
+                                quitarMarker = 0;
+
+                                if(mostrarCuadro){
+//                                    viewMarkerLinear.setEnabled(false);
+//                                    viewMarkerLinear2.setEnabled(false);
+                                    viewMarkerLinear.setVisibility(View.GONE);
+                                    viewMarkerLinear2.setVisibility(View.GONE);
+                                    boolShowMarker = false;
+                                    boolShowMarker_out = false;
+                                }else{
+                                    quitarMarker=0;
+                                }
+//                                viewMarkerLinear.setVisibility(View.GONE);
+//                                viewMarkerLinear2.setVisibility(View.GONE);
+//                                boolShowMarker = false;
+//                                boolShowMarker_out = false;
+
+                            }
+
+
+
+                        }else{
+                            quitarMarker=0;
+                        }
+//                        quitarMarker+=1;
+                    }
+
+
+
+
+                }
+
+                if(cargarMarker){
+                    cargarMarker = false;
+                    ((CopilotoActivity)getActivity()).CurrentPosition(pois,0.0f);
+                }
 
                 verifyIncidences(velocGPS,  velocCerco, location.getLatitude(), location.getLongitude());
                 countLocation++;
 
                 //validate POI
                 Poi resultPoi = validate(location, pois);  //original
-//                Poi resultPoi = validate(auxLocation, pois);
 
-                //Poi resultPoi = validate(location, poisAux); //mis marcadores
 
                 if (resultPoi != null) {
-
-                    if (countAnuncioPoi == 1) {
-                        dateDentroPoi = new Date();
-                        if (!indexMensajesPoiHablados.contains(resultPoi)) {
-
-                            //crear el marker
-                            //addMarker(resultPoi);
-                            cambio = true;
-
-//                            GeoPoint startPointM;
-//                            startPointM = new GeoPoint(resultPoi.nLatPoi, resultPoi.nLonPoi);
-
-//                            Marker startMarker = new Marker(map);
-//                            startMarker.setPosition(startPointM);
-//                            startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-//                            map.getOverlays().add(startMarker);
+                    dateDentroPoi = new Date();
+                    if (!indexMensajesPoiHablados.contains(resultPoi)) {
 
 
-                            //enables this opt in feature
-//                            Marker.ENABLE_TEXT_LABELS_WHEN_NO_IMAGE = true;
-//build the marker  FINAL
-//                            Marker m = new Marker(map);
-//                            m.setTextLabelBackgroundColor(R.color.colorGreen);
-//                            m.setTextLabelFontSize(14);
-//                            m.setTextLabelForegroundColor(R.color.colorRed);
-//                            m.setTitle("hello world");
-////must set the icon to null last
-//                            m.setIcon(null);
-//                            m.setPosition(startPointM);
-//                            map.getOverlays().add(m);
 
-                            addMarkerBox(resultPoi);
-//                            LatLng latLngI = new LatLng(resultPoi.nLatPoi, resultPoi.nLonPoi);
-//                            currentMapbox.addMarker(new MarkerOptions().position(latLngI) );
+                        addMarkerBox(resultPoi);
 
-//                            Marker myLocMarker = currentMapbox.addMarker(new MarkerOptions()
-//                                    .position(myLocation)
-//                                    .icon(BitmapDescriptorFactory.fromBitmap(writeTextOnDrawable(R.drawable.bluebox, "your text goes here"))));
+                        indexMensajesPoiHablados.add(resultPoi);
+                        long distance = resultPoi.nDisPoi != null ? resultPoi.nDisPoi : MIN_DISTANCIA_POI;
+                        Integer posParen = resultPoi.cNomPoi.indexOf('(');
+                        if(posParen != -1){
+                            String messageAux = resultPoi.cNomPoi.substring(0,posParen);
 
-//                            var marker = new mapboxgl.Marker()
-//                                    .setLngLat([30.5, 50.5]).addTo(map);
+                            Integer posParenEnd = resultPoi.cNomPoi.indexOf(')');
+                            String numeroVelocidad = resultPoi.cNomPoi.substring(posParen, posParenEnd);
+                            int velocidad = Integer.parseInt(numeroVelocidad.replaceAll("[^0-9]+", ""));
 
-//                            LatLng latLngI = new LatLng(resultPoi.nLatPoi, resultPoi.nLonPoi);
-//                            mapCurrent.addMarker(new MarkerOptions().position(latLngI).title(resultPoi.cNomViaPoi));
-
-
-                            indexMensajesPoiHablados.add(resultPoi);
-                            long distance = resultPoi.nDisPoi != null ? resultPoi.nDisPoi : MIN_DISTANCIA_POI;
-                            String message = String.format(MENSAJE_X_DICTANCIA_POI, distance, resultPoi.cNomPoi);
-
+                            //String message = String.format(MENSAJE_X_DICTANCIA_POI, distance, resultPoi.cNomPoi);
+                            String message = String.format(MENSAJE_X_DICTANCIA_POI, distance, messageAux,velocidad);
                             anuncios.add(0, new Anuncio(AnuncioType.poi, message));
-                        } else {
-                            String message = String.format(MENSAJE_CERCA_POI, resultPoi.cNomPoi);
-                            //add to queue message cerco
+                            countAnuncioPoi++;
+                        }else{
+                            String messageAux = resultPoi.cNomPoi;
+                            //String message = String.format(MENSAJE_X_DICTANCIA_POI, distance, resultPoi.cNomPoi);
+                            String message = String.format(MENSAJE_X_DICTANCIA_POI, distance, messageAux,0);
                             anuncios.add(0, new Anuncio(AnuncioType.poi, message));
-                        }
-
-                        countAnuncioPoi++;
-
-                    } else if (countAnuncioPoi == 2) {
-                        long tiempoFueraPoi = getInterval(dateDentroPoi, new Date());
-                        if (tiempoFueraPoi > tiempoMinimoPoi) {
-
-                            //removeAnuncio(AnuncioType.poi);
-                            if (!indexMensajesPoiHablados.contains(resultPoi)) {
-                                indexMensajesPoiHablados.add(resultPoi);
-                                long distance = resultPoi.nDisPoi != null ? resultPoi.nDisPoi : MIN_DISTANCIA_POI;
-                                String message = String.format(MENSAJE_X_DICTANCIA_POI, distance, resultPoi.cNomPoi);
-
-                                anuncios.add(0, new Anuncio(AnuncioType.poi, message));
-                            } else {
-                                String message = String.format(MENSAJE_CERCA_POI, resultPoi.cNomPoi);
-                                //add to queue message cerco
-                                anuncios.add(0, new Anuncio(AnuncioType.poi, message));
-                            }
                             countAnuncioPoi++;
                         }
+
+
                     }
+
+//                        countAnuncioPoi++;
+
+
 
 
                 } else {
@@ -1861,17 +1768,7 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
                     countAnuncioPoi = 1;
                 }
 
-                Poi poi = validateIntermedio(location, poisIntermedio);
-                if (poi != null) {
-                	if (countPoiIntermedio == 1) {
-                		playSound(R.raw.ruta_medio);
-                		countPoiIntermedio++;
-                	}            
-                } else {
-                	countPoiIntermedio = 1;
-                }
-                
-                Log.d("ANUNCIOS", "" + anuncios.size());
+//                Log.d("ANUNCIOS", "" + anuncios.size());
 
                 //anuncios.add(0,new Anuncio(AnuncioType.velocidad, "CURVA CERRADA PUICA"));
                 if (anuncios.size() > 0)
@@ -1884,6 +1781,15 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 
             isProcess = false;
         }
+
+
+        if(showMarkersTotal){
+            showMarkersTotal=false;
+            addTotalMarker(pois);
+        }
+
+//        Date currentTimeEnd = Calendar.getInstance().getTime();
+//        Log.d("TIEMPOOO END: ", String.valueOf(currentTimeEnd));
 
 
     }
@@ -1913,12 +1819,14 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
     }
 
     private void removeAnuncio(AnuncioType tipo) {
+
         for (int i = anuncios.size() - 1; i >= 0; i--) {
             if (anuncios.get(i).tipo == tipo) {
-                Log.d("removeAnuncio", "Tipo: " + tipo);
+//                Log.d("removeAnuncio", "Tipo: " + tipo);
                 anuncios.remove(i);
             }
         }
+
     }
 
     private long getInterval(Date dateOld, Date dateNew) {
@@ -1933,19 +1841,19 @@ public class CopilotoFragment extends BaseFragment implements LocationListener, 
 
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
-        Log.d("LocationManager", "onStatusChanged");
+//        Log.d("LocationManager", "onStatusChanged");
     }
 
     @Override
     public void onProviderEnabled(String provider) {
-        Log.d("LocationManager", "onProviderEnabled");
+//        Log.d("LocationManager", "onProviderEnabled");
         iniLocation();
 
     }
 
     @Override
     public void onProviderDisabled(String provider) {
-        Log.d("LocationManager", "onProviderDisabled");
+//        Log.d("LocationManager", "onProviderDisabled");
         iniLocation();
     }
     //---------------------

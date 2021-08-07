@@ -13,7 +13,12 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
+    <uses-permission android:name="android.permission.ACCESS_GPS" />
+    <uses-permission android:name="android.permission.ACCESS_LOCATION" />
+
     <uses-feature android:name="android.hardware.location.gps" />
+
+
 
 
     <application
@@ -24,9 +29,18 @@
         android:theme="@style/AppTheme"
         android:name="com.academiamoviles.tracklogcopilototck.MyApp"
 
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/config"
+
 
 
         >
+<!--        android:networkSecurityConfig="@xml/network_security_config"-->
+<!--   agregado     -->
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
+
         <activity android:name="com.academiamoviles.tracklogcopilototck.ui.activity.LoginActivity"
             android:theme="@style/AppThemeLogin">
             <intent-filter>
@@ -51,7 +65,7 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="@string/map_key" />
+            android:value="@string/google_maps_key" />
 
         <activity
             android:name="com.academiamoviles.tracklogcopilototck.ui.activity.MapsActivity"></activity>

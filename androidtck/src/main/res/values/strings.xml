@@ -30,4 +30,19 @@
     <string name="velocidad_cerco">VELOCIDAD MÁXIMA</string>
 
     <string name="aux">test</string>
+
+    <string name="google_maps_key">AIzaSyDBtzy8a7M1wPT7qpWKseFOmwrd5rt_kt0</string>
+
+
+    <string name="mapbox_access_token">pk.eyJ1IjoiY2hyaXN0aWFuNTgiLCJhIjoiY2s5eGVkNTk5MDAwNDNscGllNXVyY2FmaSJ9.LF3Yh_TfhQMc3O-DYP1d-Q</string>
+    <string name="simple_offline_end_progress_success">Region downloaded successfully.</string>
+    <string name="basic_offline_deleted_toast">Yosemite offline map deleted</string>
+    <string name="user_location_permission_explanation">This app needs location permissions in order to show its functionality.</string>
+    <string name="user_location_permission_not_granted">You didn\'t grant location permissions.</string>
+
+    <string name="clicked_symbol_toast">Symbol clicked</string>
+    <string name="long_clicked_symbol_toast">Symbol long clicked</string>
+    <string name="symbol_listener_instruction_toast">Tap, tap and hold, or tap and drag the icon</string>
+
+
 </resources>

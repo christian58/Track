@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.Gravity;
@@ -37,6 +38,8 @@ import com.academiamoviles.tracklogcopilototck.ws.response.Ruta_Response;
 
 import java.io.Serializable;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -45,8 +48,12 @@ import static android.view.Gravity.CENTER;
 
 public class ReportsActivity extends BaseActivity {
 
+    Date currentTimeFinal;
+    int tiempo;
 
     RelativeLayout mainLayout;
+
+    LinearLayout mainLinearLayout;
 
     TextView txtDriver;
     TextView txtNameDriver;
@@ -61,6 +68,10 @@ public class ReportsActivity extends BaseActivity {
     TextView txtPlate;
     TextView txtPlateName;
 
+    TextView txtTimePath;
+    TextView txtTimeTotalPath;
+    LinearLayout linearTimeTotal;
+
     LinearLayout linearDriver;
     LinearLayout linearDriverName;
     LinearLayout linearPath;
@@ -71,6 +82,7 @@ public class ReportsActivity extends BaseActivity {
     TableLayout tableReports;
     LinearLayout linearTable;
     ScrollView scrollView;
+    ScrollView scrollViewTotal;
     DatabaseHelper mDBHelper;
     long totalSeconds =0;
     long totalPromedio =0;
@@ -78,6 +90,10 @@ public class ReportsActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        tiempo=0;
+        currentTimeFinal = Calendar.getInstance().getTime();
+        Log.d("TiempooFinal", String.valueOf(currentTimeFinal));
+
         setContentView(R.layout.activity_reports);
         initSizeWindow();
         mainLayout = (RelativeLayout) findViewById(R.id.contentLayout);
@@ -119,6 +135,10 @@ public class ReportsActivity extends BaseActivity {
         txtPlate = new TextView(this);
         txtPlateName = new TextView(this);
 
+        txtTimePath= new TextView(this);
+        txtTimeTotalPath= new TextView(this);
+        linearTimeTotal = new LinearLayout(this);
+
         linearDriver = new LinearLayout(this);
         linearDriverName = new LinearLayout(this);
         linearPath = new LinearLayout(this);
@@ -130,6 +150,9 @@ public class ReportsActivity extends BaseActivity {
         linearTable = new LinearLayout(this);
         scrollView = new ScrollView(this);
 
+        scrollViewTotal = new ScrollView(this);
+        mainLinearLayout = new LinearLayout(this);
+
 
       //  RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
     //    mainLayout.setLayoutParams(params);
@@ -140,6 +163,10 @@ public class ReportsActivity extends BaseActivity {
         ScrollView.LayoutParams paramScroll = new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Configuration.getHeight(500));
         scrollView.setLayoutParams(paramScroll);
 
+//        ScrollView.LayoutParams paramScrollTotal = new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Configuration.getHeight(100));//martch
+        ScrollView.LayoutParams paramScrollTotal = new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        scrollViewTotal.setLayoutParams(paramScrollTotal);
+
         LinearLayout.LayoutParams paramLinear = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         linearDriver.setLayoutParams(paramLinear);
         linearDriverName.setLayoutParams(paramLinear);
@@ -148,11 +175,18 @@ public class ReportsActivity extends BaseActivity {
         linearTime.setLayoutParams(paramLinear);
         linearTable.setLayoutParams(paramLinear);
 
+        linearTimeTotal.setLayoutParams(paramLinear);
+        mainLinearLayout.setLayoutParams(paramLinear);
+
         linearDriver.setOrientation(LinearLayout.HORIZONTAL);
         linearDriverName.setOrientation(LinearLayout.HORIZONTAL);
         linearPath.setOrientation(LinearLayout.HORIZONTAL);
         linearExcess.setOrientation(LinearLayout.HORIZONTAL);
         linearTime.setOrientation(LinearLayout.HORIZONTAL);
+
+        linearTimeTotal.setOrientation(LinearLayout.HORIZONTAL);
+        mainLinearLayout.setOrientation(LinearLayout.VERTICAL);
+
 
         linearTable.setOrientation(LinearLayout.HORIZONTAL);
         linearTable.setGravity(CENTER);
@@ -174,12 +208,17 @@ public class ReportsActivity extends BaseActivity {
         txtPlate.setText(getSpanString("Placa: "));
         txtPlate.setTextSize(TypedValue.COMPLEX_UNIT_PX, Configuration.getHeight(sizeTxtDefault));
 
+        txtTimePath.setText(getSpanString("Tiempo total de Ruta: "));
+        txtTimePath.setTextSize(TypedValue.COMPLEX_UNIT_PX, Configuration.getHeight(sizeTxtDefault));
+
         txtDriver.setPadding(Configuration.getWidth(sizeTxtPadding),0,0,0);
         txtDriverNameLabel.setPadding(Configuration.getWidth(sizeTxtPadding),0,0,0);
         txtPath.setPadding(Configuration.getWidth(sizeTxtPadding),0,0,0);
         txtExcess.setPadding(Configuration.getWidth(sizeTxtPadding),0,0,0);
         txtTime.setPadding(Configuration.getWidth(sizeTxtPadding),0,0,0);
         txtPlate.setPadding(Configuration.getWidth(sizeTxtPadding),0,0,0);
+
+        txtTimePath.setPadding(Configuration.getWidth(sizeTxtPadding),0,0,0);
 
 
         txtNameDriver.setTextSize(TypedValue.COMPLEX_UNIT_PX, Configuration.getHeight(sizeTxtDefault));
@@ -188,6 +227,8 @@ public class ReportsActivity extends BaseActivity {
         txtExcessTotal.setTextSize(TypedValue.COMPLEX_UNIT_PX, Configuration.getHeight(sizeTxtDefault));
         txtTimeTotal.setTextSize(TypedValue.COMPLEX_UNIT_PX, Configuration.getHeight(sizeTxtDefault));
         txtPlateName.setTextSize(TypedValue.COMPLEX_UNIT_PX, Configuration.getHeight(sizeTxtDefault));
+
+        txtTimeTotalPath.setTextSize(TypedValue.COMPLEX_UNIT_PX, Configuration.getHeight(sizeTxtDefault));
 
         Users user = mDBHelper.getUserByUsername(myApp.objUser.userWeb);
         txtNameDriver.setText(getSpanString(user.getFirstname()));
@@ -206,9 +247,14 @@ public class ReportsActivity extends BaseActivity {
         txtPathName.setText(getSpanString(rutaName + " (Ruta " + Configuration.COD_RUTA + ")"));
         txtExcessTotal.setText(getSpanString("0km/h"));
         txtTimeTotal.setText(getSpanString("0m"));
+
+        txtTimeTotalPath.setText(getSpanString("11m"));
+
         String serie = "";
         if (Configuration.IDPLATES_HAS_PATHS != 0) {
         	Plates plate = mDBHelper.getPlateByIdPlatesHasPaths(Configuration.IDPLATES_HAS_PATHS);
+        	tiempo = mDBHelper.getTimeByIdPlatesHasPaths(Configuration.IDPLATES_HAS_PATHS);
+//            txtTimeTotalPath.setText(dat);
         	if (plate != null)
         		serie = plate.getSerie();
         }
@@ -229,6 +275,8 @@ public class ReportsActivity extends BaseActivity {
         linearPlate.addView(txtPlateName);
 
 
+        linearTimeTotal.addView(txtTimePath);
+        linearTimeTotal.addView(txtTimeTotalPath);
         /**
          * CREATION OF TABLE REPORTS
          * **/
@@ -261,6 +309,45 @@ public class ReportsActivity extends BaseActivity {
         txtColUbication.setLayoutParams(txtParams);
         txtColUbication.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
 
+
+        //  TEST
+
+//        final List<Coordinates> listCoordinates;
+//        listCoordinates = new ArrayList<>();
+////        listCoordinates.add(new Coordinates(-16.430403, -71.535351));
+////        listCoordinates.add(new Coordinates(-16.435543, -71.534225));
+////        listCoordinates.add(new Coordinates(-16.433419, -71.527101));
+//        //emulador
+//        listCoordinates.add(new Coordinates(37.425592, -122.087032));
+//        listCoordinates.add(new Coordinates(37.428494, -122.092928));
+//        listCoordinates.add(new Coordinates(37.424603, -122.097205));
+
+//37.425592, -122.087032   37.428494, -122.092928   37.424603, -122.097205
+
+//37.425592, -122.087032
+////-16.435543, -71.534225
+//
+//
+//        //        routeCoordinates.add(Point.fromLngLat(-71.535351,-16.430403));
+////        routeCoordinates.add(Point.fromLngLat(-71.535700, -16.432124));
+////        routeCoordinates.add(Point.fromLngLat(-71.536447, -16.434867));
+////        routeCoordinates.add(Point.fromLngLat(-71.536597, -16.435495));
+////        routeCoordinates.add(Point.fromLngLat(-71.532089, -16.432743));
+////        listCoordinates.add(new Coordinates(-16.408041, -71.522021));
+//
+//        txtColUbication.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//
+//                Intent intentMap = new Intent(getApplicationContext(), MapsActivity.class);
+//                intentMap.putExtra("listCoordinates",(Serializable) listCoordinates);
+//                getApplicationContext().startActivity(intentMap.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+//            }
+//        });
+
+
+        // END
+
         row.addView(txtColSpeed);
         row.addView(txtColExcess);
         row.addView(txtColDuration);
@@ -287,22 +374,64 @@ public class ReportsActivity extends BaseActivity {
         linearTable.addView(tableReports);
         scrollView.addView(linearTable);
 
+/*** TEST ****/
 
-        linearDriver.setY(120);
-        linearDriverName.setY(200);
-        linearPlate.setY(280);
-        linearPath.setY(360);
-        linearExcess.setY(440);
-        linearTime.setY(520);
-        scrollView.setY(600);
 
-        mainLayout.addView(linearDriver);
-        mainLayout.addView(linearDriverName);
-        mainLayout.addView(linearPlate);
-        mainLayout.addView(linearPath);
-        mainLayout.addView(linearExcess);
-        mainLayout.addView(linearTime);
-        mainLayout.addView(scrollView);
+        mainLinearLayout.addView(linearDriver);
+        mainLinearLayout.addView(linearDriverName);
+        mainLinearLayout.addView(linearPlate);
+        mainLinearLayout.addView(linearPath);
+        mainLinearLayout.addView(linearExcess);
+        mainLinearLayout.addView(linearTime);
+
+        mainLinearLayout.addView(linearTimeTotal);
+
+
+        mainLinearLayout.addView(scrollView);
+
+        scrollViewTotal.setY(120);
+        scrollViewTotal.addView(mainLinearLayout);
+
+        mainLayout.addView(scrollViewTotal);
+
+//        linearDriver.setY(120);
+//        linearDriverName.setY(200);
+//        linearPlate.setY(280);
+//        linearPath.setY(360);
+//        linearExcess.setY(440);
+//        linearTime.setY(520);
+
+//        linearTimeTotal.setY(600);
+
+//        scrollView.setY(680);
+
+
+
+//        mainLayout.addView(scrollView);
+
+
+
+//        linearDriver.setY(120);
+//        linearDriverName.setY(200);
+//        linearPlate.setY(280);
+//        linearPath.setY(360);
+//        linearExcess.setY(440);
+//        linearTime.setY(520);
+//
+//        linearTimeTotal.setY(600);
+//
+//        scrollView.setY(680);
+//
+//        mainLayout.addView(linearDriver);
+//        mainLayout.addView(linearDriverName);
+//        mainLayout.addView(linearPlate);
+//        mainLayout.addView(linearPath);
+//        mainLayout.addView(linearExcess);
+//        mainLayout.addView(linearTime);
+//
+//        mainLayout.addView(linearTimeTotal);
+//
+//        mainLayout.addView(scrollView);
 
 
 
@@ -380,9 +509,9 @@ public class ReportsActivity extends BaseActivity {
                 @Override
                 public void onClick(View view) {
 
-                    Intent intentMap = new Intent(getApplicationContext(), MapsActivity.class);
-                    intentMap.putExtra("listCoordinates",(Serializable) ubication[finalI].getListCoordinates());
-                    getApplicationContext().startActivity(intentMap.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+//                    Intent intentMap = new Intent(getApplicationContext(), MapsActivity.class);
+//                    intentMap.putExtra("listCoordinates",(Serializable) ubication[finalI].getListCoordinates());
+//                    getApplicationContext().startActivity(intentMap.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                 }
             });
 
@@ -399,6 +528,22 @@ public class ReportsActivity extends BaseActivity {
         }
 
         txtTimeTotal.setText(getFormatTotalDuration());
+
+        /*** Obtener Fecha ***/
+//        CopilotoActivity copilotoActivity = ((CopilotoActivity)getApplicationContext());
+//        String dat = copilotoActivity.getDateIni();
+        Date dat2 = CopilotoActivity.currentTime;
+
+
+
+//        Log.d("tiempoo2Ini", String.valueOf(dat2));
+//        String dat = "11";
+////        String datF = CopilotoActivity.COD;
+        String tiempoAux = convertirTiempo(tiempo);
+        txtTimeTotalPath.setText(tiempoAux);
+//        Log.d("tiempoo2Ini", dat);
+//        Log.d("Tiempoo2Final", String.valueOf(currentTimeFinal));
+
         if(totalPromedio ==0 || promExcess.length ==0){
             txtExcessTotal.setText("0 km/h");
 
@@ -408,6 +553,13 @@ public class ReportsActivity extends BaseActivity {
         }
 
 
+    }
+
+    public String convertirTiempo(int tiempo){
+        String salida = "m";
+        salida= tiempo/60+"h /" +tiempo%60+"m";
+
+        return  salida;
     }
 
     public String calcularDuration(List<Date> list){

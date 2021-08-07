@@ -12,7 +12,7 @@
 <!--    -18-->
 
     <dimen name="size_unidad">38sp</dimen>
-    <dimen name="size_unidad2">57sp</dimen>
+    <dimen name="size_unidad2">80sp</dimen>
     <dimen name="size_icon">50sp</dimen>
 <!--    50-->
     <dimen name="size_velocity_gps">@dimen/size_velocity_max</dimen>

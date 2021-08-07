@@ -2,6 +2,8 @@ package com.academiamoviles.tracklogcopilototck.ui.adapter;
 
 import android.content.Intent;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,6 +43,7 @@ public class RutasAdapter extends RecyclerView.Adapter<RutasAdapter.ViewHolder> 
     public void onBindViewHolder(final ViewHolder holder, final int position) {
 
         final Ruta item = list.get(position);
+        Log.d("RUTACOD", String.valueOf(item.nCodRuta));
         //holder.txtTitle.setText(item.cOriRuta + " - " + item.cDesRuta);
         holder.txtTitle.setText(item.cDescripRuta);
         holder.txtDetail.setText(""+item.nCodRuta);
@@ -78,7 +81,7 @@ public class RutasAdapter extends RecyclerView.Adapter<RutasAdapter.ViewHolder> 
 
                                 //Configuration.IDPLATES_HAS_PATHS = mDBHelper.getLastIdPlatesHasPaths(Configuration.userPlate.getPlates().getIdPlates(),paths.getIdPaths());
                                 Configuration.IDPLATES_HAS_PATHS = mDBHelper.getLastIdPlatesHasPaths(paths.getIdPaths());
-                                System.out.println("IDPLATES_HAS_PATHS: "+Configuration.IDPLATES_HAS_PATHS);
+                                System.out.println("IDPLATES_HAS_PATHSs: "+Configuration.IDPLATES_HAS_PATHS);
                                 Intent intent = new Intent(view.getContext(), ReportsActivity.class);
 
 
@@ -117,6 +120,7 @@ public class RutasAdapter extends RecyclerView.Adapter<RutasAdapter.ViewHolder> 
 
         public ViewHolder(View itemView) {
             super(itemView);
+            //cada componente de la rutas
             txtTitle = (TextView) itemView.findViewById(R.id.txtTitle);
             txtDetail = (TextView) itemView.findViewById(R.id.txtDetail);
             textViewOptions = (TextView) itemView.findViewById(R.id.textViewOptions);
